@@ -162,7 +162,8 @@ function startNextElimAnim(g) {
   // 消除数值飘字
   let elimDisplayVal = 0, elimDisplayColor = '#fff'
   if (attr === 'heart') {
-    let heal = (12 + Math.floor(g.floor * 0.8)) * elimMul
+    // 关卡模式使用队伍总REC计算心珠回复，通天塔保留原公式
+    let heal = g._teamRec ? (g._teamRec * elimMul) : ((12 + Math.floor(g.floor * 0.8)) * elimMul)
     heal *= 1 + g.runBuffs.heartBoostPct / 100
     if (g.weapon && g.weapon.type === 'heartBoost') heal *= 1 + g.weapon.pct / 100
     // 宠物技能heartBoost buff：心珠效果翻倍

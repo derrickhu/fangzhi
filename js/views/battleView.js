@@ -35,6 +35,39 @@ function rBattle(g) {
   const exitBtnX = 8*S
   const exitBtnY = eAreaTop
 
+  // 关卡模式波次指示器
+  if (g._stageMode && g.stageBattleWaves && g.stageBattleWaves.length > 1) {
+    const waveTotal = g.stageBattleWaves.length
+    const waveCur = (g.stageBattleWave || 0) + 1
+    const waveText = `波次 ${waveCur}/${waveTotal}`
+    ctx.save()
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'
+    const wtW = 90*S, wtH = 22*S
+    const wtX = W - wtW - 8*S, wtY = eAreaTop + 2*S
+    R.rr(wtX, wtY, wtW, wtH, 6*S); ctx.fill()
+    ctx.fillStyle = '#f5d76e'
+    ctx.font = `bold ${11*S}px "PingFang SC",sans-serif`
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText(waveText, wtX + wtW/2, wtY + wtH/2)
+    ctx.restore()
+  }
+
+  // 波次过渡动画
+  if (g._waveTransition && g._waveTransition.timer > 0) {
+    const wt = g._waveTransition
+    const alpha = wt.timer > 20 ? 1 : wt.timer / 20
+    ctx.save()
+    ctx.globalAlpha = alpha * 0.7
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, W, H)
+    ctx.globalAlpha = alpha
+    ctx.fillStyle = '#ffd700'
+    ctx.font = `bold ${24*S}px "PingFang SC",sans-serif`
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText(`第 ${wt.wave} 波`, W/2, H*0.4)
+    ctx.restore()
+  }
+
   // 怪物区
   if (g.enemy) {
     const eAreaH = eAreaBottom - eAreaTop

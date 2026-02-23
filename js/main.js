@@ -1,7 +1,7 @@
 /**
- * 灵宠消消塔 - 主游戏逻辑
- * Roguelike爬塔 + 智龙迷城式拖拽转珠 + 五行克制
- * 无局外养成，死亡即重开，仅记录最高层数
+ * 灵宠放置传 - 主游戏逻辑
+ * 宠物养成 + 放置挂机 + 转珠战斗 + 怪物捕捉
+ * 保留通天塔作为周常挑战模式
  */
 const { Render, TH } = require('./render')
 const Storage = require('./data/storage')
@@ -20,6 +20,15 @@ const skillEngine = require('./engine/skills')
 const anim = require('./engine/animations')
 const runMgr = require('./engine/runManager')
 const tutorial = require('./engine/tutorial')
+// 新增：放置传视图与管理器
+const homeView = require('./views/homeView')
+const stageSelectView = require('./views/stageSelectView')
+const stageMgr = require('./engine/stageManager')
+const petManageView = require('./views/petManageView')
+const captureView = require('./views/captureView')
+const idleView = require('./views/idleView')
+const shopView = require('./views/shopView')
+const inventoryView = require('./views/inventoryView')
 
 // 复用 game.js 创建的主Canvas（第一个createCanvas是屏幕Canvas，再创建就是离屏的了）
 const canvas = GameGlobal.__mainCanvas || wx.createCanvas()
@@ -156,6 +165,18 @@ class Main {
     this.rankTab = 'all'
     this.rankScrollY = 0
 
+    // === 放置传新增状态 ===
+    this.selectedArea = 'metal'         // 当前选中区域
+    this.selectedStage = 1              // 当前选中关卡编号
+    this.stageScrollY = 0               // 关卡列表滚动偏移
+    this.homeTab = 'adventure'          // 主页底栏 'adventure'|'pets'|'bag'|'shop'
+    this.stageResult = null             // 关卡战斗结果 { stars, rewards, ... }
+    this.stageBattleWave = 0            // 当前波次
+    this.stageBattleWaves = []          // 全部波次数据
+    this.stageBattleData = null         // 当前关卡生成的完整数据
+    // 启动时检查每日重置
+    this.storage.checkDailyReset()
+
     // 触摸
     if (typeof canvas.addEventListener === 'function') {
       canvas.addEventListener('touchstart', e => this.onTouch('start', e))
@@ -211,7 +232,35 @@ class Main {
       }
     }
     // victory 状态下懒生成奖励（仅生成一次，教学中不生成，最终层不生成）
-    if (this.bState === 'victory' && !this.rewards && !tutorial.isActive() && this.floor < MAX_FLOOR) {
+    // 关卡模式下由 stageManager 接管
+    if (this.bState === 'victory' && this._stageMode) {
+      // 延迟一小段让死亡动画播完
+      this._stageVictoryTimer = (this._stageVictoryTimer || 0) + 1
+      if (this._stageVictoryTimer >= 30) {
+        this._stageVictoryTimer = 0
+        stageMgr.onStageBattleVictory(this)
+      }
+    }
+    // 波次过渡动画倒计时
+    if (this._waveTransition && this._waveTransition.timer > 0) {
+      this._waveTransition.timer--
+      if (this._waveTransition.timer <= 0) {
+        this._waveTransition = null
+        if (this._waveStartPending) {
+          this._waveStartPending = false
+          // 通过 stageManager 进入下一只敌人
+          const enemyData = this._waveEnemies && this._waveEnemies[this._waveEnemyIndex]
+          if (enemyData) {
+            battleEngine.enterBattle(this, enemyData)
+            this.scene = 'battle'
+          }
+        }
+      }
+    }
+    // 捕获阶段动画倒计时
+    if (this._capturePhase && this._capturePhase.captureResult && this._capturePhase.animTimer > 0) {
+      this._capturePhase.animTimer--
+    } else if (this.bState === 'victory' && !this.rewards && !tutorial.isActive() && this.floor < MAX_FLOOR) {
       const ownedWpnIds = new Set()
       if (this.weapon) ownedWpnIds.add(this.weapon.id)
       if (this.weaponBag) this.weaponBag.forEach(w => ownedWpnIds.add(w.id))
@@ -226,7 +275,15 @@ class Main {
     if (this.scene === 'loading') {
       const elapsed = Date.now() - this._loadStart
       if (this._loadReady && elapsed > 500) {
-        this.scene = 'title'; MusicMgr.playBgm()
+        this.scene = 'home'; MusicMgr.playBgm()
+        // 新玩家赠送初始宠物（3只不同属性T3幼兽）
+        if (this.storage.ownedPets.length === 0) {
+          this._giftStarterPets()
+        }
+        // 启动时结算挂机收益提示
+        if (this.storage.idle.area && this.storage.idle.startTime) {
+          this._pendingIdleCollect = true
+        }
       }
     }
     if (this.bState === 'elimAnim') this._processElim()
@@ -310,6 +367,8 @@ class Main {
     ctx.save(); ctx.translate(sx, sy)
     switch(this.scene) {
       case 'loading': screens.rLoading(this); break
+      case 'home': homeView.rHome(this); break
+      case 'stageSelect': stageSelectView.rStageSelect(this); break
       case 'title': screens.rTitle(this); break
       case 'prepare': prepareView.rPrepare(this); break
       case 'event': eventView.rEvent(this); break
@@ -322,6 +381,15 @@ class Main {
       case 'ranking': screens.rRanking(this); break
       case 'stats': screens.rStats(this); break
       case 'dex': screens.rDex(this); break
+      case 'stageResult': stageSelectView.rStageResult(this); break
+      case 'petManage': petManageView.rPetManage(this); break
+      case 'idleManage': idleView.rIdleManage(this); break
+      case 'shopNew': shopView.rShopView(this); break
+      case 'inventory': inventoryView.rInventory(this); break
+    }
+    // 捕获覆盖层（战斗场景中）
+    if (this.scene === 'battle' && this._capturePhase) {
+      captureView.rCaptureOverlay(this)
     }
     this.dmgFloats.forEach(f => R.drawDmgFloat(f))
     this.skillEffects.forEach(e => R.drawSkillEffect(e))
@@ -382,7 +450,7 @@ class Main {
 
   // 在title场景中，如果用户未授权，预创建透明按钮覆盖排行按钮
   _updateTitleAuthBtn() {
-    if (this.scene !== 'title') {
+    if (this.scene !== 'title' && this.scene !== 'home') {
       this.storage.destroyUserInfoBtn()
       return
     }
@@ -415,7 +483,7 @@ class Main {
 
   // 在title场景中，创建透明反馈按钮覆盖在Canvas"意见反馈"上
   _updateFeedbackBtn() {
-    if (this.scene !== 'title' || this.showNewRunConfirm) {
+    if ((this.scene !== 'title' && this.scene !== 'home') || this.showNewRunConfirm) {
       this._destroyFeedbackBtn(); return
     }
     const rect = this._feedbackBtnRect
@@ -466,8 +534,10 @@ class Main {
   _drawAdReviveOverlay() { battleView.drawAdReviveOverlay(this) }
   _drawBackBtn() { screens.drawBackBtn(this) }
   _handleBackToTitle() {
-    if (this.scene === 'gameover' || this.scene === 'ranking' || this.scene === 'stats') {
-      this.scene = 'title'
+    if (this.scene === 'gameover' || this.scene === 'ranking' || this.scene === 'stats' || this.scene === 'stageResult') {
+      this.scene = 'home'
+    } else if (this.scene === 'stageSelect' || this.scene === 'petManage' || this.scene === 'idleManage' || this.scene === 'shopNew' || this.scene === 'inventory') {
+      this.scene = 'home'
     } else {
       this._saveAndExit()
     }
@@ -530,10 +600,20 @@ class Main {
     if (!t) return
     const x = t.clientX * dpr, y = t.clientY * dpr
     switch(this.scene) {
+      case 'home': homeView.tHome(this,type,x,y); break
+      case 'stageSelect': stageSelectView.tStageSelect(this,type,x,y); break
+      case 'stageResult': stageSelectView.tStageResult(this,type,x,y); break
+      case 'petManage': petManageView.tPetManage(this,type,x,y); break
+      case 'idleManage': idleView.tIdleManage(this,type,x,y); break
+      case 'shopNew': shopView.tShopView(this,type,x,y); break
+      case 'inventory': inventoryView.tInventory(this,type,x,y); break
       case 'title': touchH.tTitle(this,type,x,y); break
       case 'prepare': touchH.tPrepare(this,type,x,y); break
       case 'event': touchH.tEvent(this,type,x,y); break
-      case 'battle': touchH.tBattle(this,type,x,y); break
+      case 'battle':
+        // 捕获阶段拦截触摸
+        if (this._capturePhase && captureView.tCaptureOverlay(this,type,x,y)) break
+        touchH.tBattle(this,type,x,y); break
       case 'reward': touchH.tReward(this,type,x,y); break
       case 'shop': touchH.tShop(this,type,x,y); break
       case 'rest': touchH.tRest(this,type,x,y); break
@@ -559,7 +639,12 @@ class Main {
   _tStats(type,x,y) { touchH.tStats(this,type,x,y) }
   _enterEvent() { this._eventPetDetail = null; this._eventPetDetailData = null; this._eventWpnDetail = null; this._eventWpnDetailData = null; this._eventDragPet = null; this._eventShopUsedCount = 0; this._eventShopUsedItems = null; this._shopSelectAttr = false; this._shopSelectPet = null; this.scene = 'event' }
   _showSkillPreview(pet, index) { skillEngine.showSkillPreview(this, pet, index) }
-  // ===== 战斗进入 =====
+  // ===== 关卡战斗入口（放置传模式）=====
+  _enterStageBattle(area, stageNum) { stageMgr.enterStageBattle(this, area, stageNum) }
+  _onStageBattleVictory() { stageMgr.onStageBattleVictory(this) }
+  _onStageBattleDefeat() { stageMgr.onStageBattleDefeat(this) }
+
+  // ===== 战斗进入（通天塔/Roguelike）=====
   _enterBattle(enemyData) { battleEngine.enterBattle(this, enemyData) }
   _initBoard() { battleEngine.initBoard(this) }
   _cellAttr(r, c) { return battleEngine.cellAttr(this, r, c) }
@@ -649,19 +734,54 @@ class Main {
 
   }
 
-  _onDefeat() { runMgr.onDefeat(this, W, H) }
+  _onDefeat() {
+    if (this._stageMode) {
+      stageMgr.onStageBattleDefeat(this)
+      return
+    }
+    runMgr.onDefeat(this, W, H)
+  }
   _doAdRevive() { runMgr.doAdRevive(this, W, H) }
   _adReviveCallback() { runMgr.adReviveCallback(this, W, H) }
 
+  // ===== 新玩家初始赠宠 =====
+  _giftStarterPets() {
+    const { getPetsByAttr, PET_TIER } = require('./data/pets')
+    // 赠送3只不同属性的T3幼兽，确保新手有队伍可用
+    const attrs = ['metal', 'wood', 'water', 'fire', 'earth']
+    // 随机打乱取前3
+    for (let i = attrs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[attrs[i], attrs[j]] = [attrs[j], attrs[i]]
+    }
+    const chosen = attrs.slice(0, 3)
+    const uids = []
+    for (const attr of chosen) {
+      const pool = getPetsByAttr(attr).filter(p => PET_TIER.T3.includes(p.id))
+      if (pool.length > 0) {
+        const pet = pool[Math.floor(Math.random() * pool.length)]
+        const inst = this.storage.addPet({ id: pet.id, attr, star: 1 })
+        uids.push(inst.uid)
+      }
+    }
+    // 自动编入战斗队伍
+    if (uids.length > 0) {
+      this.storage.setBattleTeam(uids)
+    }
+    console.log('[Starter] 赠送初始宠物:', uids.length, '只')
+    // 赠送一些额外物资
+    this.storage.addItem('normalBall', 5)
+    this.storage.addItem('expOrb_s', 5)
+  }
+
   // ===== 分享 =====
   _getShareData() {
-    const st = this.storage.stats
     const floor = this.storage.bestFloor
-    const isCleared = floor >= 30
-    const title = isCleared
-      ? `我已通关灵宠消消塔！最速${st.bestTotalTurns || '??'}回合，你能超越吗？`
-      : `我已攻到消消塔第${floor}层，你能比我更强吗？`
-    return { title, imageUrl: isCleared ? 'assets/share/share_cleared.jpg' : 'assets/share/share_default.jpg' }
+    const power = this.storage.calcTeamPower(this.storage.teams.battle)
+    const title = power > 0
+      ? `我的灵宠战队战力${power}，来挑战灵宠放置传！`
+      : `来灵宠放置传收集宠物吧！`
+    return { title, imageUrl: 'assets/share/share_default.jpg' }
   }
 
   _shareStats() {

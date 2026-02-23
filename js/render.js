@@ -39,6 +39,7 @@ class Render {
     c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h); c.lineTo(x+r,y+h)
     c.quadraticCurveTo(x,y+h,x,y+h-r); c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath()
   }
+  roundRect(x,y,w,h,r) { this.rr(x,y,w,h,r) }
 
   getImg(path) {
     if (this._imgCache[path]) return this._imgCache[path]

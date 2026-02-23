@@ -350,6 +350,78 @@ const MAX_STAR = 3          // 最高星级
 const STAR_ATK_MUL = 1.3    // 每升1星ATK倍率
 const STAR_SKILL_MUL = 1.25 // 每升1星技能数值倍率
 
+// ===== 宠物成长系统 =====
+// 等级上限：★1=30，★2=50，★3=80
+function getMaxLevel(star) {
+  if (star >= 3) return 80
+  if (star >= 2) return 50
+  return 30
+}
+
+// 升到下一级所需经验（level 为目标等级）
+// 曲线：base 20, 每级 +8, 逐级递增系数
+function getExpToLevel(level) {
+  if (level <= 1) return 0
+  return Math.floor(20 + (level - 1) * 8 + Math.pow(level - 1, 1.5) * 2)
+}
+
+// 根据宠物模板 atk 推算基础 hp 和 rec（避免逐条修改100只宠物）
+// hp = atk × 12, rec = atk × 0.4（取整）
+function _getBaseHp(atk)  { return Math.floor(atk * 12) }
+function _getBaseRec(atk) { return Math.floor(atk * 0.4) }
+
+// 获取宠物实例的有效属性（含星级加成 + 等级成长）
+// instance: { uid, id, attr, star, level, exp, locked }
+// 需配合 getPetById 获取模板
+function getPetInstanceStats(instance) {
+  const template = getPetById(instance.id)
+  if (!template) return { hp: 0, atk: 0, rec: 0 }
+  const star = instance.star || 1
+  const level = instance.level || 1
+  const baseAtk = template.atk
+  const baseHp  = _getBaseHp(baseAtk)
+  const baseRec = _getBaseRec(baseAtk)
+  // 星级倍率
+  const starMul = Math.pow(STAR_ATK_MUL, star - 1)
+  // 等级成长：每级 +3% 基础值
+  const levelMul = 1 + (level - 1) * 0.03
+  return {
+    hp:  Math.floor(baseHp  * starMul * levelMul),
+    atk: Math.floor(baseAtk * starMul * levelMul),
+    rec: Math.floor(baseRec * starMul * levelMul),
+  }
+}
+
+// 计算队伍总HP（用于战斗血量初始化）
+function calcTeamTotalHp(petInstances) {
+  let total = 0
+  for (const inst of petInstances) {
+    const s = getPetInstanceStats(inst)
+    total += s.hp
+  }
+  return total
+}
+
+// 计算队伍总ATK
+function calcTeamTotalAtk(petInstances) {
+  let total = 0
+  for (const inst of petInstances) {
+    const s = getPetInstanceStats(inst)
+    total += s.atk
+  }
+  return total
+}
+
+// 计算队伍总REC（回复量）
+function calcTeamTotalRec(petInstances) {
+  let total = 0
+  for (const inst of petInstances) {
+    const s = getPetInstanceStats(inst)
+    total += s.rec
+  }
+  return total
+}
+
 // 获取宠物星级加成后的ATK
 function getPetStarAtk(pet) {
   const star = pet.star || 1
@@ -668,6 +740,13 @@ module.exports = {
   getPetAvatarPath,
   getPetLore,
   getMaxedPetIds,
+  // 新增：宠物成长系统
+  getMaxLevel,
+  getExpToLevel,
+  getPetInstanceStats,
+  calcTeamTotalHp,
+  calcTeamTotalAtk,
+  calcTeamTotalRec,
 }
 
 // 收集已满星(★3)宠物ID集合
