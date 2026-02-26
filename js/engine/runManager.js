@@ -83,6 +83,12 @@ function startRun(g) {
     return
   }
   g.weapon = generateStarterWeapon()  // 开局赠送一件基础法宝并自动装备
+  // 队长技：若第一只宠物是★4，队长技覆盖法宝效果
+  const { getCaptainSkill } = require('../data/pets')
+  const captainWeapon = getCaptainSkill(g.pets)
+  if (captainWeapon) {
+    g.weapon = captainWeapon
+  }
   nextFloor(g)
 }
 

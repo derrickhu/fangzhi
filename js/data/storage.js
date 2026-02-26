@@ -47,6 +47,7 @@ function defaultPersist() {
       expOrb_s: 3,                // 小经验珠
       expOrb_m: 0,                // 中经验珠
       expOrb_l: 0,                // 大经验珠
+      breakStone: 0,              // 突破石（★3→4升星所需）
     },
 
     // === 关卡进度 ===
@@ -288,12 +289,52 @@ class Storage {
   }
 
   // 宠物升星
-  starUpPet(uid) {
+  // ★1→2: 同宠1只, ★2→3: 同宠2只, ★3→4: 同宠3只+突破石
+  starUpPet(uid, materialUids) {
     const pet = this.getPetByUid(uid)
-    if (!pet || pet.star >= 3) return false
+    if (!pet || pet.star >= 4) return false
+    const needed = pet.star  // ★1→2需1只, ★2→3需2只, ★3→4需3只
+    if (!materialUids || materialUids.length < needed) return false
+    // 验证素材
+    for (const mUid of materialUids) {
+      const m = this.getPetByUid(mUid)
+      if (!m || m.id !== pet.id || m.uid === uid) return false
+    }
+    // ★3→4 额外需要突破石
+    if (pet.star === 3) {
+      if (!this._d.inventory.breakStone || this._d.inventory.breakStone < 1) return false
+      this._d.inventory.breakStone -= 1
+    }
+    // 消耗素材
+    for (const mUid of materialUids) {
+      this._d.ownedPets = this._d.ownedPets.filter(p => p.uid !== mUid)
+    }
     pet.star++
     this._save()
     return true
+  }
+
+  // 宠物融合：消耗两只宠物，产出一只新宠物
+  // 返回新宠物实例，失败返回 null
+  fuseTwoPets(uid1, uid2) {
+    const pet1 = this.getPetByUid(uid1)
+    const pet2 = this.getPetByUid(uid2)
+    if (!pet1 || !pet2 || uid1 === uid2) return null
+    // 编队中的宠物不能作为素材
+    if (this._d.teams.battle.includes(uid1) || this._d.teams.idle.includes(uid1)) return null
+    if (this._d.teams.battle.includes(uid2) || this._d.teams.idle.includes(uid2)) return null
+    // 锁定的宠物不能融合
+    if (pet1.locked || pet2.locked) return null
+
+    const { fusePets } = require('./pets')
+    const result = fusePets(pet1, pet2)
+    if (!result) return null
+
+    // 移除两只素材
+    this._d.ownedPets = this._d.ownedPets.filter(p => p.uid !== uid1 && p.uid !== uid2)
+    // 添加新宠物
+    const newPet = this.addPet(result)
+    return newPet
   }
 
   // ===== 编队操作 =====

@@ -5,8 +5,9 @@
 const V = require('../views/env')
 const MusicMgr = require('../runtime/music')
 const {
-  ATTR_COLOR, ATTR_NAME, BEAD_ATTRS, COUNTER_MAP, COUNTER_BY, COUNTER_MUL, COUNTERED_MUL,
+  ATTR_COLOR, ATTR_NAME, BEAD_ATTRS, COUNTER_MUL, COUNTERED_MUL,
   ENEMY_SKILLS, EVENT_TYPE, ADVENTURES, getBeadWeights,
+  getBoardType, getCounterMap, getCounterBy,
 } = require('../data/tower')
 const { getPetStarAtk, petHasSkill } = require('../data/pets')
 const tutorial = require('./tutorial')
@@ -377,8 +378,10 @@ function enterPetAtkShow(g) {
     let isCounter = false, isCountered = false
     if (g.enemy) {
       const enemyAttr = g.enemy.attr
-      if (COUNTER_MAP[pet.attr] === enemyAttr) { dmg *= COUNTER_MUL; dmg *= 1 + g.runBuffs.counterDmgPct / 100; isCounter = true }
-      else if (COUNTER_BY[pet.attr] === enemyAttr) { dmg *= COUNTERED_MUL; isCountered = true }
+      const cMap = getCounterMap(enemyAttr)
+      const cBy = getCounterBy(enemyAttr)
+      if (cMap[pet.attr] === enemyAttr) { dmg *= COUNTER_MUL; dmg *= 1 + g.runBuffs.counterDmgPct / 100; isCounter = true }
+      else if (cBy[pet.attr] === enemyAttr) { dmg *= COUNTERED_MUL; isCountered = true }
     }
     dmg *= critMul
     dmg = Math.round(dmg)
@@ -529,7 +532,9 @@ function applyFinalDamage(g, dmgMap, heal) {
     if (g.nextDmgDouble) dmg *= 2
     if (g.enemy) {
       const enemyAttr = g.enemy.attr
-      if (COUNTER_MAP[attr] === enemyAttr) {
+      const cMap = getCounterMap(enemyAttr)
+      const cBy = getCounterBy(enemyAttr)
+      if (cMap[attr] === enemyAttr) {
         dmg *= COUNTER_MUL; dmg *= 1 + g.runBuffs.counterDmgPct / 100
         // 克制闪光（applyFinalDamage阶段，仅在enterPetAtkShow未触发时生效）
         if (!g._counterFlash || g._counterFlash.timer <= 0) {
@@ -537,7 +542,7 @@ function applyFinalDamage(g, dmgMap, heal) {
           g._counterFlash = { color: cac ? cac.main : '#ffd700', timer: 10 }
         }
       }
-      else if (COUNTER_BY[attr] === enemyAttr) dmg *= COUNTERED_MUL
+      else if (cBy[attr] === enemyAttr) dmg *= COUNTERED_MUL
     }
     if (g.enemy) dmg = Math.max(0, dmg - (g.enemy.def || 0))
     if (g.weapon && g.weapon.type === 'ignoreDefPct' && g.weapon.attr === attr && g.enemy) {
@@ -853,10 +858,12 @@ function applyEnemySkill(g, skillKey) {
       break
     case 'convert': {
       const cells = []
+      const curBoard = g.enemy ? getBoardType(g.enemy.attr) : null
+      const curBeads = curBoard ? curBoard.beadAttrs.filter(a => a !== 'heart') : ['fire','water','grass','light','shadow']
       for (let i = 0; i < sk.count; i++) {
         const r = Math.floor(Math.random()*ROWS), c = Math.floor(Math.random()*COLS)
         if (g.board[r][c]) {
-          const toAttr = BEAD_ATTRS[Math.floor(Math.random()*5)]
+          const toAttr = curBeads[Math.floor(Math.random()*curBeads.length)]
           if (g.board[r][c].attr !== toAttr) {
             cells.push({ r, c, fromAttr: g.board[r][c].attr, toAttr })
           }
@@ -901,8 +908,9 @@ function applyEnemySkill(g, skillKey) {
     }
     case 'sealAttr': {
       // 封锁指定属性（随机选一个非心珠属性）的所有灵珠
-      const attrPool = ['metal','wood','water','fire','earth']
-      const targetAttr = attrPool[Math.floor(Math.random()*attrPool.length)]
+      const sealBoard = g.enemy ? getBoardType(g.enemy.attr) : null
+      const sealAttrPool = sealBoard ? sealBoard.beadAttrs.filter(a => a !== 'heart') : ['fire','water','grass','light','shadow']
+      const targetAttr = sealAttrPool[Math.floor(Math.random()*sealAttrPool.length)]
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           if (g.board[r][c] && g.board[r][c].attr === targetAttr) {

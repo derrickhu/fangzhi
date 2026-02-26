@@ -1,11 +1,12 @@
 /**
  * 宠物管理视图 — 灵宠放置传 (Phase 3)
- * 宠物列表、详情、升级、升星、编队管理
+ * 宠物列表、详情、升级、升星、编队管理、宠物融合
  */
 const V = require('./env')
 const {
   getPetById, getPetInstanceStats, getPetAvatarPath, getPetSkillDesc,
   getMaxLevel, getExpToLevel, MAX_STAR, getPetLore, getPetStarAtk,
+  getPetTier,
 } = require('../data/pets')
 const { EXP_ITEMS } = require('../data/items')
 
@@ -16,9 +17,11 @@ const ATTR_COLORS = {
 const ATTR_NAMES = {
   metal: '金', wood: '木', earth: '土', water: '水', fire: '火',
 }
+const TIER_LABELS = { T1: 'SSR', T2: 'SR', T3: 'R' }
+const TIER_COLORS = { T1: '#ff5040', T2: '#b388ff', T3: '#4dabff' }
 
 // ===== 状态 =====
-let _tab = 'list'          // 'list' | 'detail' | 'team'
+let _tab = 'list'          // 'list' | 'detail' | 'team' | 'fuse'
 let _scrollY = 0
 let _selectedPetUid = null
 let _filterAttr = null      // null=全部, 'metal'/'wood'/...
@@ -27,6 +30,13 @@ let _teamEditSlot = -1      // 编辑中的队伍槽位
 let _teamType = 'battle'    // 'battle' | 'idle'
 let _expItemUse = null       // { itemKey, count }
 let _fusionTarget = null     // 升星确认目标uid
+
+// 融合相关状态
+let _fuseSlot1 = null        // 融合素材1 uid
+let _fuseSlot2 = null        // 融合素材2 uid
+let _fuseConfirm = false     // 融合确认弹窗
+let _fuseResult = null       // 融合结果 { pet实例 } 用于展示
+let _fuseScrollY = 0         // 融合页单独的滚动偏移
 
 // ===== 渲染宠物列表 =====
 function rPetManage(g) {
@@ -41,6 +51,10 @@ function rPetManage(g) {
   }
   if (_tab === 'team') {
     _renderTeamEdit(g)
+    return
+  }
+  if (_tab === 'fuse') {
+    _renderFuse(g)
     return
   }
 
@@ -64,11 +78,18 @@ function rPetManage(g) {
   ctx.fillText('灵宠管理', W/2, topY+28*S)
 
   // 编队按钮
-  g._teamEditBtn = [W-68*S, topY+6*S, 58*S, 30*S]
+  g._teamEditBtn = [W-128*S, topY+6*S, 54*S, 30*S]
   ctx.fillStyle = '#4dabff'
   R.roundRect(...g._teamEditBtn, 6*S); ctx.fill()
   ctx.fillStyle = '#fff'; ctx.font = `bold ${11*S}px "PingFang SC",sans-serif`
   ctx.fillText('编队', g._teamEditBtn[0]+g._teamEditBtn[2]/2, topY+25*S)
+
+  // 融合按钮
+  g._fuseEntryBtn = [W-68*S, topY+6*S, 54*S, 30*S]
+  ctx.fillStyle = '#b388ff'
+  R.roundRect(...g._fuseEntryBtn, 6*S); ctx.fill()
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${11*S}px "PingFang SC",sans-serif`
+  ctx.fillText('融合', g._fuseEntryBtn[0]+g._fuseEntryBtn[2]/2, topY+25*S)
 
   // ── 属性筛选栏 ──
   const filterY = topY + topH + 4*S
@@ -388,7 +409,10 @@ function _renderFusionConfirm(g) {
   ctx.fillText(`${template.name}  ★${inst.star} → ★${inst.star+1}`, px+pw/2, py+54*S)
 
   ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = `${11*S}px "PingFang SC",sans-serif`
-  ctx.fillText(`需要消耗1只同名宠物`, px+pw/2, py+78*S)
+  const needed = inst.star
+  let costText = `需要消耗${needed}只同名宠物`
+  if (inst.star === 3) costText += ' + 1个突破石'
+  ctx.fillText(costText, px+pw/2, py+78*S)
 
   // 确认/取消
   g._fusionOkBtn = [px+20*S, py+ph-44*S, 100*S, 32*S]
@@ -533,6 +557,338 @@ function _renderTeamEdit(g) {
   ctx.restore()
 }
 
+// ===== 融合页面 =====
+function _renderFuse(g) {
+  const { ctx, R, TH, W, H, S, safeTop } = V
+  const topY = safeTop
+  const topH = 42*S
+
+  ctx.fillStyle = '#0d0d1a'; ctx.fillRect(0, 0, W, H)
+  ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0, topY, W, topH)
+
+  // 返回按钮
+  g._fuseBackBtn = [8*S, topY+6*S, 56*S, 30*S]
+  ctx.fillStyle = 'rgba(255,255,255,0.15)'
+  R.roundRect(...g._fuseBackBtn, 6*S); ctx.fill()
+  ctx.fillStyle = '#fff'; ctx.font = `${12*S}px "PingFang SC",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.fillText('← 返回', g._fuseBackBtn[0]+g._fuseBackBtn[2]/2, topY+25*S)
+
+  // 标题
+  ctx.fillStyle = '#b388ff'; ctx.font = `bold ${16*S}px "PingFang SC",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.fillText('宠物融合', W/2, topY+28*S)
+
+  let curY = topY + topH + 16*S
+
+  // 说明文字
+  ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = `${10*S}px "PingFang SC",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.fillText('选择两只宠物进行融合，将诞生一只全新宠物', W/2, curY)
+  curY += 18*S
+
+  // ── 两个融合槽 ──
+  const slotSize = 70*S
+  const slotGap = 30*S
+  const slotY = curY
+  const slot1X = W/2 - slotSize - slotGap/2
+  const slot2X = W/2 + slotGap/2
+
+  // 槽位1
+  g._fuseSlotRect1 = [slot1X, slotY, slotSize, slotSize]
+  _drawFuseSlot(g, slot1X, slotY, slotSize, _fuseSlot1, '素材1')
+
+  // 中间的 + 号
+  ctx.fillStyle = '#b388ff'; ctx.font = `bold ${24*S}px "PingFang SC",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.fillText('+', W/2, slotY + slotSize/2 + 8*S)
+
+  // 槽位2
+  g._fuseSlotRect2 = [slot2X, slotY, slotSize, slotSize]
+  _drawFuseSlot(g, slot2X, slotY, slotSize, _fuseSlot2, '素材2')
+
+  curY = slotY + slotSize + 16*S
+
+  // ── 融合按钮 ──
+  const canFuse = _fuseSlot1 && _fuseSlot2 && _fuseSlot1 !== _fuseSlot2
+  const fuseBtnW = 140*S, fuseBtnH = 40*S
+  g._fuseDoBtn = [(W-fuseBtnW)/2, curY, fuseBtnW, fuseBtnH]
+  ctx.fillStyle = canFuse ? '#b388ff' : 'rgba(255,255,255,0.1)'
+  R.roundRect(...g._fuseDoBtn, 8*S); ctx.fill()
+  ctx.fillStyle = canFuse ? '#fff' : 'rgba(255,255,255,0.3)'
+  ctx.font = `bold ${14*S}px "PingFang SC",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.fillText('开始融合', W/2, curY + fuseBtnH*0.65)
+
+  curY += fuseBtnH + 16*S
+
+  // 融合提示：品质规则
+  if (_fuseSlot1 && _fuseSlot2) {
+    const p1 = g.storage.getPetByUid(_fuseSlot1)
+    const p2 = g.storage.getPetByUid(_fuseSlot2)
+    if (p1 && p2) {
+      const t1 = getPetTier(p1.id), t2 = getPetTier(p2.id)
+      ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = `${10*S}px "PingFang SC",sans-serif`
+      ctx.textAlign = 'center'
+      ctx.fillText(`素材品质: ${TIER_LABELS[t1]} + ${TIER_LABELS[t2]}  → 品质越高产出越好`, W/2, curY)
+      curY += 16*S
+    }
+  }
+
+  // ── 宠物选择列表 ──
+  const listY = curY
+  const listH = H - listY
+  const allPets = g.storage.ownedPets.slice()
+    .filter(p => !g.storage.teams.battle.includes(p.uid) && !g.storage.teams.idle.includes(p.uid) && !p.locked)
+    .sort((a, b) => b.level - a.level || b.star - a.star)
+
+  const cellW = 56*S, cellH = 72*S, cellGap = 6*S
+  const cols = Math.floor((W - cellGap) / (cellW + cellGap))
+
+  ctx.save()
+  ctx.beginPath(); ctx.rect(0, listY, W, listH); ctx.clip()
+
+  g._fusePetCells = []
+  for (let i = 0; i < allPets.length; i++) {
+    const col = i % cols, row = Math.floor(i / cols)
+    const cx = cellGap + col*(cellW+cellGap)
+    const cy = listY + row*(cellH+cellGap) - _fuseScrollY
+    if (cy + cellH < listY || cy > listY + listH) continue
+
+    const inst = allPets[i]
+    const template = getPetById(inst.id)
+    if (!template) continue
+
+    g._fusePetCells.push({ rect: [cx, cy, cellW, cellH], uid: inst.uid })
+
+    const isSelected = inst.uid === _fuseSlot1 || inst.uid === _fuseSlot2
+    const aColor = ATTR_COLORS[inst.attr] || '#999'
+    ctx.fillStyle = isSelected ? 'rgba(179,136,255,0.3)' : 'rgba(30,30,50,0.8)'
+    R.roundRect(cx, cy, cellW, cellH, 4*S); ctx.fill()
+
+    if (isSelected) {
+      ctx.strokeStyle = '#b388ff'; ctx.lineWidth = 2*S
+      R.roundRect(cx, cy, cellW, cellH, 4*S); ctx.stroke()
+    } else {
+      ctx.strokeStyle = aColor; ctx.lineWidth = 1*S
+      R.roundRect(cx, cy, cellW, cellH, 4*S); ctx.stroke()
+    }
+
+    // 头像
+    const avatarPath = getPetAvatarPath({ ...template, star: inst.star })
+    try {
+      const img = R.getImage(avatarPath)
+      if (img) {
+        ctx.save()
+        R.roundRect(cx+2*S, cy+2*S, cellW-4*S, cellW-4*S, 3*S); ctx.clip()
+        ctx.drawImage(img, cx+2*S, cy+2*S, cellW-4*S, cellW-4*S)
+        ctx.restore()
+      }
+    } catch(e) {}
+
+    // 星级
+    let starStr = ''
+    for (let s = 0; s < MAX_STAR; s++) starStr += (s < inst.star) ? '★' : '☆'
+    ctx.fillStyle = '#ffd700'; ctx.font = `${7*S}px "PingFang SC",sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText(starStr, cx+cellW/2, cy+cellW+8*S)
+
+    // 等级 + 品质
+    const tier = getPetTier(inst.id)
+    ctx.fillStyle = TIER_COLORS[tier]; ctx.font = `${8*S}px "PingFang SC",sans-serif`
+    ctx.fillText(`${TIER_LABELS[tier]} Lv${inst.level}`, cx+cellW/2, cy+cellW+18*S)
+
+    // 已选标记
+    if (inst.uid === _fuseSlot1) {
+      ctx.fillStyle = '#b388ff'; ctx.font = `bold ${9*S}px "PingFang SC",sans-serif`
+      ctx.textAlign = 'left'
+      ctx.fillText('①', cx+2*S, cy+10*S)
+    } else if (inst.uid === _fuseSlot2) {
+      ctx.fillStyle = '#b388ff'; ctx.font = `bold ${9*S}px "PingFang SC",sans-serif`
+      ctx.textAlign = 'left'
+      ctx.fillText('②', cx+2*S, cy+10*S)
+    }
+  }
+
+  ctx.restore()
+
+  // 无可用宠物提示
+  if (allPets.length === 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = `${12*S}px "PingFang SC",sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText('没有可融合的宠物（编队中/锁定的宠物无法融合）', W/2, listY + 40*S)
+  }
+
+  // 融合确认弹窗
+  if (_fuseConfirm) {
+    _renderFuseConfirm(g)
+  }
+
+  // 融合结果展示
+  if (_fuseResult) {
+    _renderFuseResult(g)
+  }
+}
+
+// 绘制融合槽位
+function _drawFuseSlot(g, x, y, size, uid, label) {
+  const { ctx, R, S } = V
+  const inst = uid ? g.storage.getPetByUid(uid) : null
+  const template = inst ? getPetById(inst.id) : null
+
+  ctx.fillStyle = inst ? 'rgba(30,30,50,0.9)' : 'rgba(255,255,255,0.05)'
+  R.roundRect(x, y, size, size, 8*S); ctx.fill()
+  ctx.strokeStyle = inst ? (ATTR_COLORS[inst.attr] || '#b388ff') : 'rgba(255,255,255,0.2)'
+  ctx.lineWidth = inst ? 2*S : 1*S
+  R.roundRect(x, y, size, size, 8*S); ctx.stroke()
+
+  if (inst && template) {
+    // 头像
+    const avatarPath = getPetAvatarPath({ ...template, star: inst.star })
+    try {
+      const img = R.getImage(avatarPath)
+      if (img) {
+        ctx.save()
+        R.roundRect(x+4*S, y+4*S, size-8*S, size-8*S, 6*S); ctx.clip()
+        ctx.drawImage(img, x+4*S, y+4*S, size-8*S, size-8*S)
+        ctx.restore()
+      }
+    } catch(e) {}
+    // 名字
+    ctx.fillStyle = '#fff'; ctx.font = `${9*S}px "PingFang SC",sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText(template.name, x+size/2, y+size+12*S)
+    // 品质+星
+    const tier = getPetTier(inst.id)
+    ctx.fillStyle = TIER_COLORS[tier]; ctx.font = `${8*S}px "PingFang SC",sans-serif`
+    ctx.fillText(`${TIER_LABELS[tier]} ★${inst.star}`, x+size/2, y+size+22*S)
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = `${22*S}px "PingFang SC",sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText('+', x+size/2, y+size*0.58)
+    ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = `${10*S}px "PingFang SC",sans-serif`
+    ctx.fillText(label, x+size/2, y+size+12*S)
+  }
+}
+
+// 融合确认弹窗
+function _renderFuseConfirm(g) {
+  const { ctx, R, W, H, S } = V
+  ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0, 0, W, H)
+
+  const inst1 = g.storage.getPetByUid(_fuseSlot1)
+  const inst2 = g.storage.getPetByUid(_fuseSlot2)
+  if (!inst1 || !inst2) { _fuseConfirm = false; return }
+  const t1 = getPetById(inst1.id), t2 = getPetById(inst2.id)
+  if (!t1 || !t2) { _fuseConfirm = false; return }
+
+  const pw = 280*S, ph = 180*S
+  const px = (W-pw)/2, py = (H-ph)/2
+  ctx.fillStyle = 'rgba(20,20,40,0.95)'
+  R.roundRect(px, py, pw, ph, 12*S); ctx.fill()
+  ctx.strokeStyle = '#b388ff'; ctx.lineWidth = 2*S
+  R.roundRect(px, py, pw, ph, 12*S); ctx.stroke()
+
+  ctx.fillStyle = '#b388ff'; ctx.font = `bold ${14*S}px "PingFang SC",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.fillText('确认融合？', px+pw/2, py+26*S)
+
+  ctx.fillStyle = '#fff'; ctx.font = `${12*S}px "PingFang SC",sans-serif`
+  ctx.fillText(`${t1.name} + ${t2.name}`, px+pw/2, py+54*S)
+
+  ctx.fillStyle = '#ff5040'; ctx.font = `${11*S}px "PingFang SC",sans-serif`
+  ctx.fillText('⚠ 两只宠物将被消耗！', px+pw/2, py+78*S)
+
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = `${10*S}px "PingFang SC",sans-serif`
+  ctx.fillText('融合后将随机获得一只新宠物', px+pw/2, py+96*S)
+
+  // 确认/取消
+  g._fuseConfirmOkBtn = [px+20*S, py+ph-44*S, 110*S, 32*S]
+  ctx.fillStyle = '#b388ff'
+  R.roundRect(...g._fuseConfirmOkBtn, 6*S); ctx.fill()
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${12*S}px "PingFang SC",sans-serif`
+  ctx.fillText('确认融合', g._fuseConfirmOkBtn[0]+55*S, py+ph-23*S)
+
+  g._fuseConfirmCancelBtn = [px+pw-130*S, py+ph-44*S, 110*S, 32*S]
+  ctx.fillStyle = 'rgba(255,255,255,0.15)'
+  R.roundRect(...g._fuseConfirmCancelBtn, 6*S); ctx.fill()
+  ctx.fillStyle = '#fff'
+  ctx.fillText('取消', g._fuseConfirmCancelBtn[0]+55*S, py+ph-23*S)
+}
+
+// 融合结果展示弹窗
+function _renderFuseResult(g) {
+  const { ctx, R, W, H, S } = V
+  ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0, 0, W, H)
+
+  const inst = _fuseResult
+  if (!inst) return
+  const template = getPetById(inst.id)
+  if (!template) return
+  const tier = getPetTier(inst.id)
+  const aColor = ATTR_COLORS[inst.attr] || '#999'
+
+  const pw = 260*S, ph = 300*S
+  const px = (W-pw)/2, py = (H-ph)/2
+  ctx.fillStyle = 'rgba(20,20,40,0.95)'
+  R.roundRect(px, py, pw, ph, 12*S); ctx.fill()
+  ctx.strokeStyle = '#b388ff'; ctx.lineWidth = 2*S
+  R.roundRect(px, py, pw, ph, 12*S); ctx.stroke()
+
+  // 标题
+  ctx.fillStyle = '#b388ff'; ctx.font = `bold ${16*S}px "PingFang SC",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.fillText('✨ 融合成功！', px+pw/2, py+28*S)
+
+  // 头像
+  const imgSize = 90*S
+  const imgX = px + (pw-imgSize)/2
+  const imgY = py + 42*S
+  const avatarPath = getPetAvatarPath({ ...template, star: inst.star })
+  try {
+    const img = R.getImage(avatarPath)
+    if (img) {
+      ctx.save()
+      R.roundRect(imgX, imgY, imgSize, imgSize, 10*S); ctx.clip()
+      ctx.drawImage(img, imgX, imgY, imgSize, imgSize)
+      ctx.restore()
+    }
+  } catch(e) {}
+  ctx.strokeStyle = aColor; ctx.lineWidth = 2*S
+  R.roundRect(imgX, imgY, imgSize, imgSize, 10*S); ctx.stroke()
+
+  let curY = imgY + imgSize + 16*S
+
+  // 名字
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${16*S}px "PingFang SC",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.fillText(template.name, px+pw/2, curY)
+  curY += 22*S
+
+  // 品质
+  ctx.fillStyle = TIER_COLORS[tier]; ctx.font = `bold ${13*S}px "PingFang SC",sans-serif`
+  ctx.fillText(TIER_LABELS[tier], px+pw/2, curY)
+  curY += 18*S
+
+  // 属性 + 星级
+  ctx.fillStyle = aColor; ctx.font = `${12*S}px "PingFang SC",sans-serif`
+  ctx.fillText(`${ATTR_NAMES[inst.attr]}属性  ★1  Lv.1`, px+pw/2, curY)
+  curY += 20*S
+
+  // 属性值
+  const stats = getPetInstanceStats(inst)
+  ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = `${11*S}px "PingFang SC",sans-serif`
+  ctx.fillText(`HP:${stats.hp}  ATK:${stats.atk}  REC:${stats.rec}`, px+pw/2, curY)
+
+  // 确认按钮
+  g._fuseResultOkBtn = [px+(pw-100*S)/2, py+ph-44*S, 100*S, 32*S]
+  ctx.fillStyle = '#b388ff'
+  R.roundRect(...g._fuseResultOkBtn, 6*S); ctx.fill()
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${12*S}px "PingFang SC",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.fillText('太好了！', g._fuseResultOkBtn[0]+50*S, py+ph-23*S)
+}
+
 // ===== 触摸处理 =====
 let _touchStartY = 0, _touchMoved = false
 
@@ -540,7 +896,11 @@ function tPetManage(g, type, x, y) {
   if (type === 'start') { _touchStartY = y; _touchMoved = false; return }
   if (type === 'move') {
     if (Math.abs(y - _touchStartY) > 5) _touchMoved = true
-    _scrollY = Math.max(0, _scrollY + (_touchStartY - y))
+    if (_tab === 'fuse') {
+      _fuseScrollY = Math.max(0, _fuseScrollY + (_touchStartY - y))
+    } else {
+      _scrollY = Math.max(0, _scrollY + (_touchStartY - y))
+    }
     _touchStartY = y
     return
   }
@@ -630,9 +990,77 @@ function tPetManage(g, type, x, y) {
     return
   }
 
+  // 融合页
+  if (_tab === 'fuse') {
+    // 融合结果弹窗
+    if (_fuseResult) {
+      if (g._fuseResultOkBtn && _hit(x,y,g._fuseResultOkBtn)) {
+        _fuseResult = null
+        _fuseSlot1 = null
+        _fuseSlot2 = null
+        return
+      }
+      return
+    }
+    // 融合确认弹窗
+    if (_fuseConfirm) {
+      if (g._fuseConfirmOkBtn && _hit(x,y,g._fuseConfirmOkBtn)) {
+        // 执行融合
+        const result = g.storage.fuseTwoPets(_fuseSlot1, _fuseSlot2)
+        _fuseConfirm = false
+        if (result) {
+          _fuseResult = result
+        }
+        return
+      }
+      if (g._fuseConfirmCancelBtn && _hit(x,y,g._fuseConfirmCancelBtn)) {
+        _fuseConfirm = false
+        return
+      }
+      return
+    }
+    // 返回
+    if (g._fuseBackBtn && _hit(x,y,g._fuseBackBtn)) {
+      _tab = 'list'; _fuseSlot1 = null; _fuseSlot2 = null; _fuseScrollY = 0; return
+    }
+    // 点击槽位清空
+    if (g._fuseSlotRect1 && _hit(x,y,g._fuseSlotRect1) && _fuseSlot1) {
+      _fuseSlot1 = null; return
+    }
+    if (g._fuseSlotRect2 && _hit(x,y,g._fuseSlotRect2) && _fuseSlot2) {
+      _fuseSlot2 = null; return
+    }
+    // 开始融合按钮
+    if (g._fuseDoBtn && _hit(x,y,g._fuseDoBtn)) {
+      if (_fuseSlot1 && _fuseSlot2 && _fuseSlot1 !== _fuseSlot2) {
+        _fuseConfirm = true
+      }
+      return
+    }
+    // 选择宠物
+    if (g._fusePetCells) {
+      for (const cell of g._fusePetCells) {
+        if (_hit(x,y,cell.rect)) {
+          const uid = cell.uid
+          // 如果已选中则取消
+          if (_fuseSlot1 === uid) { _fuseSlot1 = null; return }
+          if (_fuseSlot2 === uid) { _fuseSlot2 = null; return }
+          // 填入空槽
+          if (!_fuseSlot1) { _fuseSlot1 = uid; return }
+          if (!_fuseSlot2) { _fuseSlot2 = uid; return }
+          // 两槽都满，替换槽2
+          _fuseSlot2 = uid
+          return
+        }
+      }
+    }
+    return
+  }
+
   // 列表页
   if (g._petBackBtn && _hit(x,y,g._petBackBtn)) { g.scene = 'home'; _tab = 'list'; _scrollY = 0; return }
   if (g._teamEditBtn && _hit(x,y,g._teamEditBtn)) { _tab = 'team'; _scrollY = 0; return }
+  if (g._fuseEntryBtn && _hit(x,y,g._fuseEntryBtn)) { _tab = 'fuse'; _fuseSlot1 = null; _fuseSlot2 = null; _fuseScrollY = 0; return }
   if (g._filterBtns) {
     for (const btn of g._filterBtns) {
       if (_hit(x,y,btn.rect)) { _filterAttr = btn.attr; _scrollY = 0; return }
@@ -662,29 +1090,38 @@ function _getFilteredPets(g) {
 
 function _canFuseForStarUp(g, inst) {
   // 需要同ID、非本体、非编队中的宠物作为素材
-  return g.storage.ownedPets.some(p =>
+  // ★1→2需1只, ★2→3需2只, ★3→4需3只
+  const needed = inst.star || 1  // 当前星级 = 需要素材数量
+  const materials = g.storage.ownedPets.filter(p =>
     p.uid !== inst.uid &&
     p.id === inst.id &&
     !g.storage.teams.battle.includes(p.uid) &&
     !g.storage.teams.idle.includes(p.uid) &&
     !p.locked
   )
+  if (materials.length < needed) return false
+  // ★3→4 额外需要突破石
+  if (inst.star === 3) {
+    if ((g.storage.inventory.breakStone || 0) < 1) return false
+  }
+  return true
 }
 
 function _doFusion(g) {
   const inst = g.storage.getPetByUid(_selectedPetUid)
   if (!inst || inst.star >= MAX_STAR) return
-  // 找素材宠物
-  const material = g.storage.ownedPets.find(p =>
+  const needed = inst.star  // 当前星级 = 需要素材数量
+  // 找足够的素材宠物
+  const materials = g.storage.ownedPets.filter(p =>
     p.uid !== inst.uid &&
     p.id === inst.id &&
     !g.storage.teams.battle.includes(p.uid) &&
     !g.storage.teams.idle.includes(p.uid) &&
     !p.locked
-  )
-  if (!material) return
-  g.storage.removePet(material.uid)
-  g.storage.starUpPet(inst.uid)
+  ).slice(0, needed)
+  if (materials.length < needed) return
+  const materialUids = materials.map(m => m.uid)
+  g.storage.starUpPet(inst.uid, materialUids)
 }
 
 function resetView() {
@@ -693,6 +1130,11 @@ function resetView() {
   _selectedPetUid = null
   _expItemUse = null
   _fusionTarget = null
+  _fuseSlot1 = null
+  _fuseSlot2 = null
+  _fuseConfirm = false
+  _fuseResult = null
+  _fuseScrollY = 0
 }
 
 module.exports = { rPetManage, tPetManage, resetView }

@@ -7,29 +7,66 @@
 const { randomPetByAttr, randomPet, randomPetFromPool } = require('./pets')
 const { randomWeapon } = require('./weapons')
 
-// ===== 五行属性基础 =====
-const ATTRS = ['metal','wood','earth','water','fire']
-const ATTR_NAME = { metal:'金', wood:'木', earth:'土', water:'水', fire:'火' }
+// ===== 九元素属性基础 =====
+const ATTRS = ['fire','water','grass','thunder','earth','wind','light','shadow','heart']
+const ATTR_NAME = {
+  fire:'火', water:'水', grass:'草', thunder:'雷', earth:'土', wind:'风',
+  light:'光', shadow:'影', heart:'心',
+  // 兼容旧五行命名（渐进迁移用）
+  metal:'金', wood:'木',
+}
 const ATTR_COLOR = {
+  fire:    { main:'#ff4d4d', bg:'#3a1515', lt:'#ff8080', dk:'#cc2020' },
+  water:   { main:'#4dabff', bg:'#152535', lt:'#80ccff', dk:'#2080cc' },
+  grass:   { main:'#4dcc4d', bg:'#153515', lt:'#80ff80', dk:'#20a020' },
+  thunder: { main:'#ffd700', bg:'#353520', lt:'#ffed80', dk:'#cca800' },
+  earth:   { main:'#d4a056', bg:'#2a2015', lt:'#e8c080', dk:'#a07030' },
+  wind:    { main:'#80e0c0', bg:'#153025', lt:'#b0ffdd', dk:'#40b090' },
+  light:   { main:'#fffacd', bg:'#35351a', lt:'#ffffee', dk:'#cccc80' },
+  shadow:  { main:'#a060d0', bg:'#251535', lt:'#cc88ff', dk:'#7040a0' },
+  heart:   { main:'#ff69b4', bg:'#351525', lt:'#ff99cc', dk:'#cc3080' },
+  // 兼容旧五行
   metal: { main:'#ffd700', bg:'#353520', lt:'#ffed80', dk:'#cca800' },
   wood:  { main:'#4dcc4d', bg:'#153515', lt:'#80ff80', dk:'#20a020' },
-  earth: { main:'#d4a056', bg:'#2a2015', lt:'#e8c080', dk:'#a07030' },
-  water: { main:'#4dabff', bg:'#152535', lt:'#80ccff', dk:'#2080cc' },
-  fire:  { main:'#ff4d4d', bg:'#3a1515', lt:'#ff8080', dk:'#cc2020' },
 }
-const COUNTER_MAP = { metal:'wood', wood:'earth', earth:'water', water:'fire', fire:'metal' }
-const COUNTER_BY  = { wood:'metal', earth:'wood', water:'earth', fire:'water', metal:'fire' }
-// 克制倍率（提升至2.5倍，让策略消除更有意义）
+
+// ===== 双棋盘制 =====
+// 炎海棋盘：对阵 火/水/草/光 属性怪
+const BOARD_FIRE = {
+  beadAttrs: ['fire','water','grass','light','shadow','heart'],
+  counterMap: { fire:'grass', grass:'water', water:'fire', light:'shadow', shadow:'light' },
+  counterBy:  { grass:'fire', water:'grass', fire:'water', shadow:'light', light:'shadow' },
+  enemyAttrs: ['fire','water','grass','light'],
+}
+// 岚雷棋盘：对阵 风/雷/土/影 属性怪
+const BOARD_THUNDER = {
+  beadAttrs: ['wind','thunder','earth','light','shadow','heart'],
+  counterMap: { thunder:'wind', wind:'earth', earth:'thunder', light:'shadow', shadow:'light' },
+  counterBy:  { wind:'thunder', earth:'wind', thunder:'earth', shadow:'light', light:'shadow' },
+  enemyAttrs: ['wind','thunder','earth','shadow'],
+}
+
+// 根据敌人属性选择棋盘
+function getBoardType(enemyAttr) {
+  if (BOARD_THUNDER.enemyAttrs.includes(enemyAttr)) return BOARD_THUNDER
+  return BOARD_FIRE  // 默认炎海棋盘
+}
+
+// 获取当前棋盘的克制关系
+function getCounterMap(enemyAttr) { return getBoardType(enemyAttr).counterMap }
+function getCounterBy(enemyAttr)  { return getBoardType(enemyAttr).counterBy }
+
+// 兼容旧代码的固定导出（默认使用炎海棋盘，实际战斗中通过 getBoardType 动态获取）
+const COUNTER_MAP = { ...BOARD_FIRE.counterMap }
+const COUNTER_BY  = { ...BOARD_FIRE.counterBy }
+// 克制倍率
 const COUNTER_MUL = 2.5      // 克制对方伤害倍率
 const COUNTERED_MUL = 0.5    // 被克制伤害倍率
 
-// 棋盘灵珠（含心珠）
-const BEAD_ATTRS = ['metal','wood','earth','water','fire','heart']
-const BEAD_ATTR_NAME = { ...ATTR_NAME, heart:'心' }
-const BEAD_ATTR_COLOR = {
-  ...ATTR_COLOR,
-  heart: { main:'#ff69b4', bg:'#351525', lt:'#ff99cc', dk:'#cc3080' },
-}
+// 棋盘灵珠（默认炎海，实际战斗中动态切换）
+const BEAD_ATTRS = BOARD_FIRE.beadAttrs
+const BEAD_ATTR_NAME = { ...ATTR_NAME }
+const BEAD_ATTR_COLOR = { ...ATTR_COLOR }
 
 // ===== 事件类型 =====
 const EVENT_TYPE = {
@@ -105,22 +142,37 @@ const MONSTER_TIERS = [
   { minFloor:26,  maxFloor:30,  hpMin:2200, hpMax:3000,  atkMin:50,  atkMax:68  },
 ]
 
+// 战斗属性池：9种属性（怪物随机分配，决定使用哪个棋盘）
+const BATTLE_ATTRS = ['fire','water','grass','thunder','earth','wind','light','shadow']
+
 // 普通怪物名池（按属性）
 const MONSTER_NAMES = {
+  fire:    ['火灵狐妖','焰灵小精','赤炎散修','爆炎妖兵','焚天蛮将','烈焰妖卫','朱雀妖尊'],
+  water:   ['水灵鱼妖','冰魄小精','碧水散修','寒潮妖兵','沧澜蛮将','深渊妖卫','蛟龙妖尊'],
+  grass:   ['草灵花妖','藤蔓小精','青木散修','枯藤妖兵','苍木蛮将','灵木妖卫','万木妖尊'],
+  thunder: ['雷灵鼠妖','雷光小精','轰雷散修','雷霆妖兵','天罡蛮将','天罡妖卫','雷神妖尊'],
+  earth:   ['土灵石怪','泥人兵','黄土散修','山岩妖兵','裂地蛮将','厚土妖卫','磐岩妖尊'],
+  wind:    ['风灵蝶妖','清风小精','疾风散修','狂风妖兵','风暴蛮将','飓风妖卫','风神妖尊'],
+  light:   ['光灵仙蝶','辉光小精','圣光散修','圣辉妖兵','光明蛮将','光耀妖卫','光明妖尊'],
+  shadow:  ['影灵暗蝠','暗影小精','暗夜散修','暗影妖兵','冥影蛮将','暗渊妖卫','冥王妖尊'],
+  // 兼容旧五行（渐进迁移）
   metal: ['金灵鼠妖','铜甲兵','金锋散修','锐金妖兵','金翎蛮将','天罡妖卫','金鹏妖尊'],
-  wood:  ['木灵花妖','藤蔓小精','青木散修','枯藤妖兵','苍木蛮将','灵木妖卫','万木妖尊'],
-  earth: ['土灵石怪','泥人兵','黄土散修','山岩妖兵','裂地蛮将','厚土妖卫','磐岩妖尊'],
-  water: ['水灵鱼妖','冰魄小精','碧水散修','寒潮妖兵','沧澜蛮将','深渊妖卫','蛟龙妖尊'],
-  fire:  ['火灵狐妖','焰灵小精','赤炎散修','爆炎妖兵','焚天蛮将','烈焰妖卫','朱雀妖尊'],
+  wood:  ['草灵花妖','藤蔓小精','青木散修','枯藤妖兵','苍木蛮将','灵木妖卫','万木妖尊'],
 }
 
 // 精英怪物名池
 const ELITE_NAMES = {
-  metal: ['金甲妖将·碎天','破军金狮','金罡战魔'],
+  fire:    ['焚天魔凰·灭世','炎狱妖帝','赤炎魔君'],
+  water:   ['深渊蛟魔·溺魂','冰魄仙蛇','寒潮魔将'],
+  grass:   ['枯木大妖·噬灵','缠枝毒蛇王','万木妖魔'],
+  thunder: ['雷霆妖将·碎天','破军雷狮','雷罡战魔'],
+  earth:   ['磐岩巨魔·震地','山岳石王','镇地魔将'],
+  wind:    ['狂风妖将·裂空','风暴蛇王','飓风魔将'],
+  light:   ['圣光妖将·审判','光明狮王','辉耀魔将'],
+  shadow:  ['暗影魔君·噬魂','冥渊蛇王','暗渊魔将'],
+  // 兼容旧五行
+  metal: ['雷霆妖将·碎天','破军雷狮','雷罡战魔'],
   wood:  ['枯木大妖·噬灵','缠枝毒蛇王','万木妖魔'],
-  earth: ['磐岩巨魔·震地','山岳石王','镇地魔将'],
-  water: ['深渊蛟魔·溺魂','冰魄仙蛇','寒潮魔将'],
-  fire:  ['焚天魔凰·灭世','炎狱妖帝','赤炎魔君'],
 }
 
 // 精英怪技能
@@ -362,7 +414,7 @@ function _pushRecent(avatar) {
 
 // ===== 生成某层怪物 =====
 function generateMonster(floor) {
-  const attr = _pick(ATTRS)
+  const attr = _pick(BATTLE_ATTRS)
 
   // 查找数值段
   let tier = MONSTER_TIERS[MONSTER_TIERS.length - 1]
@@ -379,13 +431,13 @@ function generateMonster(floor) {
   let atk = Math.round(_lerp(tier.atkMin, tier.atkMax, progress) * rand())
 
   // 名字：基准档位 ±1 随机浮动，增加同层段怪物多样性
-  const names = MONSTER_NAMES[attr]
+  const names = MONSTER_NAMES[attr] || MONSTER_NAMES.fire
   const baseIdx = Math.min(Math.floor(floor / 5), names.length - 1)
   const lo = Math.max(0, baseIdx - 1)
   const hi = Math.min(names.length - 1, baseIdx + 1)
-  // 在 [lo, hi] 范围内随机选取，优先避开最近出现过的
-  const attrKeyMap = { metal:'m', wood:'w', earth:'e', water:'s', fire:'f' }
-  const monKey = attrKeyMap[attr] || 'm'
+  // 属性缩写映射（用于图片路径）
+  const attrKeyMap = { fire:'f', water:'s', grass:'w', thunder:'m', earth:'e', wind:'w', light:'f', shadow:'e', metal:'m', wood:'w' }
+  const monKey = attrKeyMap[attr] || 'f'
   let nameIdx = baseIdx
   const candidates = []
   for (let i = lo; i <= hi; i++) candidates.push(i)
@@ -436,7 +488,7 @@ function generateElite(floor) {
   base.def   = Math.round(base.def * 1.5)
 
   // 名称
-  base.name = _pick(ELITE_NAMES[attr])
+  base.name = _pick(ELITE_NAMES[attr] || ELITE_NAMES.fire)
   base.isElite = true
 
   // 精英必带2个技能
@@ -447,9 +499,9 @@ function generateElite(floor) {
   base.skills = [s1, s2]
 
   // 精英图片：elite_{属性缩写}_{1-3}，根据名字索引匹配
-  const eliteAttrMap = { metal:'m', wood:'w', water:'s', fire:'f', earth:'e' }
-  const eliteKey = eliteAttrMap[attr] || 'm'
-  const eliteNames = ELITE_NAMES[attr]
+  const eliteAttrMap = { fire:'f', water:'s', grass:'w', thunder:'m', earth:'e', wind:'w', light:'f', shadow:'e', metal:'m', wood:'w' }
+  const eliteKey = eliteAttrMap[attr] || 'f'
+  const eliteNames = ELITE_NAMES[attr] || ELITE_NAMES.fire
   const eliteIdx = eliteNames.indexOf(base.name) + 1 || _rand(1,3)
   base.avatar = `enemies/elite_${eliteKey}_${eliteIdx}`
   // 精英专属战斗背景（每属性3张随机选1张）
@@ -472,7 +524,7 @@ function generateBoss(floor) {
   base.atk   = Math.round(base.atk * atkMul)
   base.def   = Math.round(base.def * defMul)
   base.isBoss = true
-  base.attr   = _pick(ATTRS)
+  base.attr   = _pick(BATTLE_ATTRS)
 
   // 按层级从不同BOSS池中随机选取
   let pool
@@ -650,17 +702,20 @@ function generateRewards(floor, eventType, speedKill, ownedWeaponIds, sessionPet
   return rewards.filter(r => r != null)
 }
 
-// ===== 灵珠权重（根据属性偏好生成） =====
+// ===== 灵珠权重（根据敌人属性选择棋盘，并生成权重） =====
 function getBeadWeights(floorAttr, weapon) {
-  const weights = {
-    metal: 1, wood: 1, earth: 1, water: 1, fire: 1, heart: 0.8
+  const board = getBoardType(floorAttr)
+  const weights = {}
+  // 只生成当前棋盘的珠子
+  for (const attr of board.beadAttrs) {
+    weights[attr] = attr === 'heart' ? 0.8 : 1
   }
   // 如果本层有属性偏向，增加该属性珠出现率
   if (floorAttr && weights[floorAttr] !== undefined) {
     weights[floorAttr] = 1.4
   }
-  // 法宝beadRateUp效果
-  if (weapon && weapon.type === 'beadRateUp' && weapon.attr) {
+  // 法宝/队长技beadRateUp效果
+  if (weapon && weapon.type === 'beadRateUp' && weapon.attr && weights[weapon.attr] !== undefined) {
     weights[weapon.attr] = (weights[weapon.attr] || 1) * 1.5
   }
   return weights
@@ -672,6 +727,9 @@ module.exports = {
   ATTRS, ATTR_NAME, ATTR_COLOR,
   COUNTER_MAP, COUNTER_BY, COUNTER_MUL, COUNTERED_MUL,
   BEAD_ATTRS, BEAD_ATTR_NAME, BEAD_ATTR_COLOR,
+  // 双棋盘
+  BOARD_FIRE, BOARD_THUNDER, getBoardType, getCounterMap, getCounterBy,
+  BATTLE_ATTRS,
   EVENT_TYPE,
   ENEMY_SKILLS,
   ADVENTURES, SHOP_ITEMS, SHOP_DISPLAY_COUNT, SHOP_FREE_COUNT, SHOP_HP_COST_PCT, REST_OPTIONS,

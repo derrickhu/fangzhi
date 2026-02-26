@@ -85,13 +85,20 @@ function enterStageBattle(g, area, stageNum) {
   g.enemyBuffs = []
   g._teamRec = totalRec
 
-  // 法宝
-  const equippedWpn = g.storage.getEquippedWeapon()
-  if (equippedWpn) {
-    const { WEAPONS } = require('../data/weapons')
-    g.weapon = WEAPONS.find(w => w.id === equippedWpn.id) || null
+  // 法宝 / 队长技
+  // 优先使用队长技（★4宠物在编队第一位时），否则使用装备法宝
+  const { getCaptainSkill } = require('../data/pets')
+  const captainWeapon = getCaptainSkill(g.pets)
+  if (captainWeapon) {
+    g.weapon = captainWeapon
   } else {
-    g.weapon = null
+    const equippedWpn = g.storage.getEquippedWeapon()
+    if (equippedWpn) {
+      const { WEAPONS } = require('../data/weapons')
+      g.weapon = WEAPONS.find(w => w.id === equippedWpn.id) || null
+    } else {
+      g.weapon = null
+    }
   }
 
   // runBuffs 在关卡模式下重置

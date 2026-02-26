@@ -48,6 +48,7 @@ class Render {
     this._imgCache[path] = img
     return img
   }
+  getImage(path) { return this.getImg(path) }
 
   /**
    * 预加载关键图片，返回 Promise

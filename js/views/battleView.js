@@ -2,7 +2,7 @@
  * 战斗界面渲染：棋盘、队伍栏、怪物区、Combo、倒计时、胜利/失败覆盖
  */
 const V = require('./env')
-const { ATTR_COLOR, ATTR_NAME, COUNTER_MAP, COUNTER_BY, COUNTER_MUL, COUNTERED_MUL, ENEMY_SKILLS, REWARD_TYPES, getRealmInfo, REALM_TABLE, MAX_FLOOR } = require('../data/tower')
+const { ATTR_COLOR, ATTR_NAME, COUNTER_MUL, COUNTERED_MUL, ENEMY_SKILLS, REWARD_TYPES, getRealmInfo, REALM_TABLE, MAX_FLOOR, getCounterMap, getCounterBy } = require('../data/tower')
 const { getPetStarAtk, getPetAvatarPath, MAX_STAR, getPetSkillDesc, petHasSkill } = require('../data/pets')
 const tutorial = require('../engine/tutorial')
 const MusicMgr = require('../runtime/music')
@@ -284,8 +284,11 @@ function rBattle(g) {
     }
 
     // --- 弱点 & 抵抗（药丸标签化，Boss弱点呼吸脉冲） ---
-    const weakAttr = COUNTER_BY[g.enemy.attr]
-    const resistAttr = COUNTER_MAP[g.enemy.attr]
+    const enemyAttr = g.enemy.attr
+    const counterMap = getCounterMap(enemyAttr)
+    const counterBy = getCounterBy(enemyAttr)
+    const weakAttr = counterBy[enemyAttr]
+    const resistAttr = counterMap[enemyAttr]
     const orbR = 7*S
     const infoFontSize = 11*S
     const infoY = nameY + (hasSkillCd ? skillCdBlockH + 8*S : 14*S)
@@ -868,8 +871,10 @@ function _drawCombo(g, cellSize, boardTop) {
     if (g.weapon && g.weapon.type === 'attrDmgUp' && g.weapon.attr === attr) d *= 1 + g.weapon.pct / 100
     if (g.weapon && g.weapon.type === 'allAtkUp') d *= 1 + g.weapon.pct / 100
     if (g.enemy) {
-      if (COUNTER_MAP[attr] === g.enemy.attr) d *= COUNTER_MUL
-      else if (COUNTER_BY[attr] === g.enemy.attr) d *= COUNTERED_MUL
+      const _cMap = getCounterMap(g.enemy.attr)
+      const _cBy = getCounterBy(g.enemy.attr)
+      if (_cMap[attr] === g.enemy.attr) d *= COUNTER_MUL
+      else if (_cBy[attr] === g.enemy.attr) d *= COUNTERED_MUL
     }
     estTotalDmg += d
   }

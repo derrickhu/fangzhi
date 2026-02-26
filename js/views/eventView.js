@@ -3,7 +3,7 @@
  * 战斗层：整合法宝切换 + 灵宠替换，支持点击快速交换，无需跳转prepare页面
  */
 const V = require('./env')
-const { ATTR_COLOR, ATTR_NAME, COUNTER_BY, COUNTER_MAP, getRealmInfo } = require('../data/tower')
+const { ATTR_COLOR, ATTR_NAME, getCounterBy, getCounterMap, getRealmInfo } = require('../data/tower')
 const { drawBackBtn } = require('./screens')
 const { wrapText } = require('./prepareView')
 const { getPetStarAtk, MAX_STAR, getPetAvatarPath, getPetSkillDesc, petHasSkill } = require('../data/pets')
@@ -553,7 +553,7 @@ function rEvent(g) {
   infoY += 22*S
   const orbR2 = 8*S
   let bx = infoX
-  const weakAttr = COUNTER_BY[e.attr]
+  const weakAttr = getCounterBy(e.attr)[e.attr]
   if (weakAttr) {
     ctx.fillStyle = '#ddd'; ctx.font = `bold ${12*S}px "PingFang SC",sans-serif`
     ctx.fillText('弱点:', bx, infoY)
@@ -574,7 +574,7 @@ function rEvent(g) {
     ctx.restore()
     bx += orbR2*2 + 14*S
   }
-  const resistAttr = COUNTER_MAP[e.attr]
+  const resistAttr = getCounterMap(e.attr)[e.attr]
   if (resistAttr) {
     ctx.fillStyle = '#999'; ctx.font = `bold ${12*S}px "PingFang SC",sans-serif`
     ctx.fillText('抵抗:', bx, infoY)
@@ -808,7 +808,7 @@ function rEvent(g) {
           else if (ri.type === 'starUp') _drawBadge(ctx, S, ix, teamIconY, teamIconSize, 'UP', '#30b050')
         }
         // 弱点属性高亮：敌人弱点对应属性的宠物闪烁边框提醒
-        const _weakAttr = COUNTER_BY[e.attr]
+        const _weakAttr = getCounterBy(e.attr)[e.attr]
         if (_weakAttr && p.attr === _weakAttr) {
           const pulse = 0.5 + 0.5 * Math.sin(g.af * 0.08)
           const wac = ATTR_COLOR[_weakAttr]
@@ -940,7 +940,7 @@ function rEvent(g) {
         else if (bri.type === 'starUp') _drawBadge(ctx, S, bx, by, bagIconSize, 'UP', '#30b050')
       }
       // 弱点属性高亮
-      const _bWeakAttr = COUNTER_BY[e.attr]
+      const _bWeakAttr = getCounterBy(e.attr)[e.attr]
       if (_bWeakAttr && bPet.attr === _bWeakAttr) {
         const bPulse = 0.5 + 0.5 * Math.sin(g.af * 0.08)
         const bwac = ATTR_COLOR[_bWeakAttr]

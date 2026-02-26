@@ -330,10 +330,13 @@ function petHasSkill(pet) {
   return (pet.star || 1) >= 2 && !!pet.skill
 }
 
-// 获取宠物当前技能描述（★1无技能，★2基础技能，★3强化技能）
+// 获取宠物当前技能描述（★1无技能，★2基础技能，★3强化技能，★4终极技能）
 function getPetSkillDesc(pet) {
   const star = pet.star || 1
   if (star < 2) return ''  // ★1无技能
+  if (star >= 4 && STAR4_SKILL_OVERRIDE[pet.id]) {
+    return STAR4_SKILL_OVERRIDE[pet.id].desc
+  }
   if (star >= 3 && STAR3_SKILL_OVERRIDE[pet.id]) {
     return STAR3_SKILL_OVERRIDE[pet.id].desc
   }
@@ -345,14 +348,158 @@ function getStar3Override(petId) {
   return STAR3_SKILL_OVERRIDE[petId] || null
 }
 
+// 获取★4终极数据（若有）
+function getStar4Override(petId) {
+  return STAR4_SKILL_OVERRIDE[petId] || null
+}
+
 // ===== 星级融合系统常量 =====
-const MAX_STAR = 3          // 最高星级
-const STAR_ATK_MUL = 1.3    // 每升1星ATK倍率
+const MAX_STAR = 4          // 最高星级（★4终极形态+队长技）
+const STAR_ATK_MUL = 1.3    // 每升1星ATK倍率（★4=1.3^3≈2.2）
 const STAR_SKILL_MUL = 1.25 // 每升1星技能数值倍率
 
+// ===== ★4终极技能覆写（队长技解锁标记） =====
+// ★4解锁队长技，具体数据在Phase 2C队长技系统中详细定义
+// 此处仅存储★4主动技能的覆写（若有）
+const STAR4_SKILL_OVERRIDE = {
+  // 占位：Phase 2C 中按每只宠物填充队长技数据
+  // 格式: petId: { desc: '★4技能描述', ...覆写字段 }
+}
+
+// ===== 队长技系统（★4解锁，替代法宝系统） =====
+// 编队第一位★4宠物的队长技全队生效
+// 数据格式与 weapon 对象兼容（type, pct, attr 等字段）
+// T1（SSR）和 T2（SR）有独特队长技，T3（R）为通用弱效果
+const CAPTAIN_SKILLS = {
+  // --- 金属性 ---
+  m1:  { name:'锋芒领袖', desc:'全队攻击力+10%', type:'allAtkUp', pct:10 },
+  m2:  { name:'金珠领域', desc:'金珠出现概率提升', type:'beadRateUp', attr:'metal' },
+  m3:  { name:'金甲守护', desc:'受到所有伤害-10%', type:'reduceDmg', pct:10 },
+  m4:  { name:'天罡威压', desc:'金属性伤害+35%', type:'attrDmgUp', attr:'metal', pct:35 },
+  m5:  { name:'金缚之力', desc:'怪物眩晕时伤害+30%', type:'stunBonusDmg', pct:30 },
+  m6:  { name:'剑气如虹', desc:'Combo伤害额外+20%', type:'comboDmgUp', pct:20 },
+  m7:  { name:'罡气化愈', desc:'心珠效果+40%', type:'heartBoost', pct:40 },
+  m8:  { name:'鸣金速攻', desc:'转珠时间+2秒', type:'extraTime', sec:2 },
+  m9:  { name:'破甲先锋', desc:'金属性伤害无视50%防御', type:'ignoreDefPct', attr:'metal', pct:50 },
+  m10: { name:'金身不灭', desc:'抵挡1次致死伤害', type:'revive' },
+  m11: { name:'锐金连击', desc:'全队攻击力+12%', type:'allAtkUp', pct:12 },
+  m12: { name:'金纹克木', desc:'金属性伤害+30%', type:'attrDmgUp', attr:'metal', pct:30 },
+  m13: { name:'暗金杀意', desc:'暴击率+20%，暴击伤害+30%', type:'critAll', critRate:20, critDmg:30 },
+  m14: { name:'金甲战吼', desc:'全队攻击力+15%', type:'allAtkUp', pct:15 },
+  m15: { name:'金虹之力', desc:'金属性伤害+30%', type:'attrDmgUp', attr:'metal', pct:30 },
+  m16: { name:'战魂激励', desc:'全队攻击力+18%', type:'allAtkUp', pct:18 },
+  m17: { name:'金翎风暴', desc:'金珠出现概率大幅提升', type:'beadRateUp', attr:'metal' },
+  m18: { name:'战神降世', desc:'暴击率+25%，暴击伤害+40%', type:'critAll', critRate:25, critDmg:40 },
+  m19: { name:'星耀之威', desc:'金属性伤害+40%', type:'attrDmgUp', attr:'metal', pct:40 },
+  m20: { name:'万钧之势', desc:'全队攻击力+20%', type:'allAtkUp', pct:20 },
+
+  // --- 木属性 ---
+  w1:  { name:'春回领袖', desc:'每回合自动回血3%', type:'regenPct', pct:3 },
+  w2:  { name:'毒蛇领域', desc:'攻击时概率让怪物中毒', type:'poisonChance', dmg:10, dur:3, chance:25 },
+  w3:  { name:'灵熊化愈', desc:'心珠效果+35%', type:'heartBoost', pct:35 },
+  w4:  { name:'万木之珠', desc:'木珠出现概率提升', type:'beadRateUp', attr:'wood' },
+  w5:  { name:'仙子木愈', desc:'消除木珠时回血4%', type:'healOnElim', attr:'wood', pct:4 },
+  w6:  { name:'木灵爆裂', desc:'木属性伤害+35%', type:'attrDmgUp', attr:'wood', pct:35 },
+  w7:  { name:'缠枝束缚', desc:'被攻击有概率眩晕怪物', type:'counterStun', chance:15 },
+  w8:  { name:'枯木守护', desc:'受到所有伤害-10%', type:'reduceDmg', pct:10 },
+  w9:  { name:'灵木滋生', desc:'木珠出现概率大幅提升', type:'beadRateUp', attr:'wood' },
+  w10: { name:'万木天威', desc:'全队攻击力+20%', type:'allAtkUp', pct:20 },
+  w11: { name:'藤甲壁垒', desc:'受到所有伤害-15%', type:'reduceDmg', pct:15 },
+  w12: { name:'翠竹疾风', desc:'全队攻击力+12%', type:'allAtkUp', pct:12 },
+  w13: { name:'灵芝净化', desc:'免疫持续伤害', type:'immuneDot' },
+  w14: { name:'蛟龙木力', desc:'木属性伤害+30%', type:'attrDmgUp', attr:'wood', pct:30 },
+  w15: { name:'仙鹿领域', desc:'消除木珠时回血5%', type:'healOnElim', attr:'wood', pct:5 },
+  w16: { name:'古藤之力', desc:'木属性伤害+35%', type:'attrDmgUp', attr:'wood', pct:35 },
+  w17: { name:'螳螂无双', desc:'Combo伤害额外+25%', type:'comboDmgUp', pct:25 },
+  w18: { name:'翠雀疾风', desc:'全队攻击力+15%', type:'allAtkUp', pct:15 },
+  w19: { name:'神龟守护', desc:'受到所有伤害-18%', type:'reduceDmg', pct:18 },
+  w20: { name:'神木天罚', desc:'木属性伤害+40%', type:'attrDmgUp', attr:'wood', pct:40 },
+
+  // --- 水属性 ---
+  s1:  { name:'沧澜之珠', desc:'水珠出现概率提升', type:'beadRateUp', attr:'water' },
+  s2:  { name:'冰魄化愈', desc:'心珠效果+35%', type:'heartBoost', pct:35 },
+  s3:  { name:'寒冰领域', desc:'被攻击有概率眩晕怪物', type:'counterStun', chance:15 },
+  s4:  { name:'蛟龙之力', desc:'水属性伤害+35%', type:'attrDmgUp', attr:'water', pct:35 },
+  s5:  { name:'碧波愈泉', desc:'每回合自动回血4%', type:'regenPct', pct:4 },
+  s6:  { name:'水灵爆涌', desc:'水属性伤害+35%', type:'attrDmgUp', attr:'water', pct:35 },
+  s7:  { name:'寒冰之壁', desc:'被攻击反弹15%伤害', type:'reflectPct', pct:15 },
+  s8:  { name:'鲸吞怒涛', desc:'全队攻击力+15%', type:'allAtkUp', pct:15 },
+  s9:  { name:'凝水护体', desc:'不会被负面效果影响', type:'immuneDebuff' },
+  s10: { name:'龙神覆海', desc:'水属性伤害+40%', type:'attrDmgUp', attr:'water', pct:40 },
+  s11: { name:'冰玄领域', desc:'水珠出现概率大幅提升', type:'beadRateUp', attr:'water' },
+  s12: { name:'海蛇锐击', desc:'全队攻击力+12%', type:'allAtkUp', pct:12 },
+  s13: { name:'灵蟾冰封', desc:'怪物眩晕时伤害+30%', type:'stunBonusDmg', pct:30 },
+  s14: { name:'冰魄封天', desc:'水属性伤害+35%', type:'attrDmgUp', attr:'water', pct:35 },
+  s15: { name:'水母幻术', desc:'转珠时间+2秒', type:'extraTime', sec:2 },
+  s16: { name:'水镜反射', desc:'被攻击反弹20%伤害', type:'reflectPct', pct:20 },
+  s17: { name:'鲲鹏之力', desc:'全队攻击力+20%', type:'allAtkUp', pct:20 },
+  s18: { name:'神蛟护佑', desc:'受到所有伤害-18%', type:'reduceDmg', pct:18 },
+  s19: { name:'灵獭化力', desc:'消除水珠时回血5%', type:'healOnElim', attr:'water', pct:5 },
+  s20: { name:'冰凰绝对', desc:'永久免疫眩晕', type:'immuneStun' },
+
+  // --- 火属性 ---
+  f1:  { name:'焰爪领袖', desc:'全队攻击力+10%', type:'allAtkUp', pct:10 },
+  f2:  { name:'烈火领域', desc:'火珠出现概率提升', type:'beadRateUp', attr:'fire' },
+  f3:  { name:'凤凰烈焰', desc:'火属性伤害+35%', type:'attrDmgUp', attr:'fire', pct:35 },
+  f4:  { name:'炎狱暴击', desc:'暴击率+20%，暴击伤害+30%', type:'critAll', critRate:20, critDmg:30 },
+  f5:  { name:'灼烧领域', desc:'攻击时概率让怪物中毒', type:'poisonChance', dmg:12, dur:3, chance:25 },
+  f6:  { name:'火莲绽放', desc:'Combo伤害额外+25%', type:'comboDmgUp', pct:25 },
+  f7:  { name:'焚天之怒', desc:'怪物眩晕时伤害+35%', type:'stunBonusDmg', pct:35 },
+  f8:  { name:'炎魔连击', desc:'Combo伤害额外+20%', type:'comboDmgUp', pct:20 },
+  f9:  { name:'蛇焰化愈', desc:'心珠效果+40%', type:'heartBoost', pct:40 },
+  f10: { name:'朱雀圣焰', desc:'暴击率+25%，暴击伤害+40%', type:'critAll', critRate:25, critDmg:40 },
+  f11: { name:'焚魂领域', desc:'火珠出现概率大幅提升', type:'beadRateUp', attr:'fire' },
+  f12: { name:'炎狱锐击', desc:'全队攻击力+12%', type:'allAtkUp', pct:12 },
+  f13: { name:'烈阳统帅', desc:'全队攻击力+18%', type:'allAtkUp', pct:18 },
+  f14: { name:'凰翼暴击', desc:'暴击率+20%，暴击伤害+35%', type:'critAll', critRate:20, critDmg:35 },
+  f15: { name:'炎爆之力', desc:'火属性伤害+35%', type:'attrDmgUp', attr:'fire', pct:35 },
+  f16: { name:'天火焚灭', desc:'火属性伤害+40%', type:'attrDmgUp', attr:'fire', pct:40 },
+  f17: { name:'麒麟战焰', desc:'全队攻击力+20%', type:'allAtkUp', pct:20 },
+  f18: { name:'元火暴击', desc:'每段Combo暴击率+5%', type:'comboToCrit', pct:5 },
+  f19: { name:'龙炎破甲', desc:'火属性伤害无视50%防御', type:'ignoreDefPct', attr:'fire', pct:50 },
+  f20: { name:'余烬爆发', desc:'残血时伤害+20%', type:'lowHpDmgUp', pct:20, threshold:30 },
+
+  // --- 土属性 ---
+  e1:  { name:'厚土化愈', desc:'心珠效果+35%', type:'heartBoost', pct:35 },
+  e2:  { name:'山岳领域', desc:'土珠出现概率提升', type:'beadRateUp', attr:'earth' },
+  e3:  { name:'镇地壁垒', desc:'受到所有伤害-12%', type:'reduceDmg', pct:12 },
+  e4:  { name:'玄武震慑', desc:'怪物眩晕时伤害+30%', type:'stunBonusDmg', pct:30 },
+  e5:  { name:'裂地之力', desc:'土属性伤害+35%', type:'attrDmgUp', attr:'earth', pct:35 },
+  e6:  { name:'岩甲回春', desc:'血量上限+20%', type:'hpMaxUp', pct:20 },
+  e7:  { name:'石狮无畏', desc:'永久免疫眩晕', type:'immuneStun' },
+  e8:  { name:'大地反噬', desc:'被攻击反弹20%伤害', type:'reflectPct', pct:20 },
+  e9:  { name:'蟒击碎岩', desc:'土属性伤害+35%', type:'attrDmgUp', attr:'earth', pct:35 },
+  e10: { name:'后土庇佑', desc:'受到所有伤害-20%', type:'reduceDmg', pct:20 },
+  e11: { name:'土魂领域', desc:'土珠出现概率大幅提升', type:'beadRateUp', attr:'earth' },
+  e12: { name:'兔踢疾风', desc:'全队攻击力+12%', type:'allAtkUp', pct:12 },
+  e13: { name:'镇地龙威', desc:'受到所有伤害-15%', type:'reduceDmg', pct:15 },
+  e14: { name:'蛤蟆震地', desc:'土属性伤害无视50%防御', type:'ignoreDefPct', attr:'earth', pct:50 },
+  e15: { name:'灵蚁化力', desc:'消除土珠时获得护盾', type:'shieldOnElim', attr:'earth', val:15 },
+  e16: { name:'象踏碎甲', desc:'土属性伤害无视30%防御', type:'ignoreDefPct', attr:'earth', pct:30 },
+  e17: { name:'地脉转珠', desc:'转珠时间+2秒', type:'extraTime', sec:2 },
+  e18: { name:'神牛之力', desc:'全队攻击力+20%', type:'allAtkUp', pct:20 },
+  e19: { name:'灵龟镇水', desc:'消除土珠时获得护盾', type:'shieldOnElim', attr:'earth', val:20 },
+  e20: { name:'玄武破天', desc:'土属性伤害+40%', type:'attrDmgUp', attr:'earth', pct:40 },
+}
+
+// 获取队长技：编队第一位★4宠物的队长技，转换为weapon兼容格式
+// 返回 null 表示无队长技（第一位宠物非★4）
+function getCaptainSkill(pets) {
+  if (!pets || pets.length === 0) return null
+  const captain = pets[0]
+  if (!captain || (captain.star || 1) < 4) return null
+  const skill = CAPTAIN_SKILLS[captain.id]
+  if (!skill) {
+    // T3 通用弱效果
+    return { id: `cap_${captain.id}`, name: '初级领袖', desc: '全队攻击力+5%', type: 'allAtkUp', pct: 5, _isCaptainSkill: true, _captainPetId: captain.id }
+  }
+  return { id: `cap_${captain.id}`, ...skill, _isCaptainSkill: true, _captainPetId: captain.id }
+}
+
 // ===== 宠物成长系统 =====
-// 等级上限：★1=30，★2=50，★3=80
+// 等级上限：★1=30，★2=50，★3=80，★4=100
 function getMaxLevel(star) {
+  if (star >= 4) return 100
   if (star >= 3) return 80
   if (star >= 2) return 50
   return 30
@@ -428,11 +575,11 @@ function getPetStarAtk(pet) {
   return Math.floor(pet.atk * Math.pow(STAR_ATK_MUL, star - 1))
 }
 
-// 获取宠物星级技能数值倍率（★1无技能，★2=1.0基础，★3=1.25强化）
+// 获取宠物星级技能数值倍率（★1无技能，★2=1.0，★3=1.25，★4=1.5625）
 function getPetStarSkillMul(pet) {
   const star = pet.star || 1
   if (star < 2) return 0  // ★1无技能
-  return Math.pow(STAR_SKILL_MUL, star - 2)  // ★2=1.0, ★3=1.25
+  return Math.pow(STAR_SKILL_MUL, star - 2)  // ★2=1.0, ★3=1.25, ★4=1.5625
 }
 
 // 尝试融合宠物：在已有宠物列表中查找同ID宠物，找到则升星
@@ -450,6 +597,113 @@ function tryMergePet(allPets, newPet) {
     return { merged: true, target, maxed: true }
   }
   return { merged: false, target: null }
+}
+
+// ===== 合成配方系统 =====
+// 固定配方表：两只指定宠物合成 → 固定产物
+// 格式：{ a: petId, b: petId, product: petId }
+// 注：a/b 无序，查找时自动双向匹配
+// 当前配方表为空，待 Phase 3D 新增 213 只宠物数据后填充 189 条配方
+const RECIPES = [
+  // 占位示例（Phase 3D 填充）：
+  // { a: 'fire_fox', b: 'water_otter', product: 'mist_fox' },
+]
+
+// 构建配方查找索引（双向映射，支持 O(1) 查找）
+const _recipeIndex = {}
+function _buildRecipeIndex() {
+  for (const r of RECIPES) {
+    const key1 = r.a + '|' + r.b
+    const key2 = r.b + '|' + r.a
+    _recipeIndex[key1] = r.product
+    _recipeIndex[key2] = r.product
+  }
+}
+_buildRecipeIndex()
+
+/**
+ * 查找两只宠物是否有固定合成配方
+ * @param {string} id1 - 素材宠物1的ID
+ * @param {string} id2 - 素材宠物2的ID
+ * @returns {string|null} 产物宠物ID，无配方返回 null
+ */
+function findRecipe(id1, id2) {
+  return _recipeIndex[id1 + '|' + id2] || null
+}
+
+// ===== 宠物融合：任意两只宠物 → 一只新宠物 =====
+// 优先查固定配方表，有配方则产出固定宠物
+// 无配方时走随机融合逻辑：
+// 融合产出品质由素材品质决定：
+//   两只T3 → 80%T3 / 18%T2 / 2%T1
+//   T3+T2  → 30%T3 / 55%T2 / 15%T1
+//   两只T2 → 10%T3 / 50%T2 / 40%T1
+//   T2+T1  → 0%T3  / 30%T2 / 70%T1
+//   含T1   → 0%T3  / 15%T2 / 85%T1 (其余情况)
+// 属性：50%概率随机取素材之一的属性，50%概率完全随机
+const FUSE_TIER_WEIGHTS = {
+  'T3+T3': { T3: 80, T2: 18, T1: 2 },
+  'T3+T2': { T3: 30, T2: 55, T1: 15 },
+  'T2+T2': { T3: 10, T2: 50, T1: 40 },
+  'T2+T1': { T3: 0,  T2: 30, T1: 70 },
+  'T1+T1': { T3: 0,  T2: 15, T1: 85 },
+  'T3+T1': { T3: 5,  T2: 40, T1: 55 },
+}
+
+function _getFuseTierKey(tier1, tier2) {
+  // 排序使 T1 > T2 > T3（品质高的在前）
+  const order = { T1: 1, T2: 2, T3: 3 }
+  const sorted = [tier1, tier2].sort((a, b) => order[a] - order[b])
+  return sorted[0] + '+' + sorted[1]
+}
+
+/**
+ * 融合两只宠物，返回新宠物的模板数据 { id, attr, star:1, name, ... }
+ * @param {object} inst1 - 素材宠物实例1 (含 id, attr)
+ * @param {object} inst2 - 素材宠物实例2 (含 id, attr)
+ * @param {string[]} [excludeIds] - 排除的宠物ID列表（可选，避免产出与素材相同的宠物）
+ * @returns {object} 新宠物模板 { ...template, attr, star: 1 }
+ */
+function fusePets(inst1, inst2, excludeIds) {
+  // === 优先查固定配方 ===
+  const recipeProductId = findRecipe(inst1.id, inst2.id)
+  if (recipeProductId) {
+    const product = getPetById(recipeProductId)
+    if (product) return { ...product, star: 1 }
+  }
+
+  // === 无配方：随机融合 ===
+  const tier1 = getPetTier(inst1.id)
+  const tier2 = getPetTier(inst2.id)
+  const key = _getFuseTierKey(tier1, tier2)
+  const weights = FUSE_TIER_WEIGHTS[key] || FUSE_TIER_WEIGHTS['T3+T3']
+
+  // Roll 品质
+  const totalW = weights.T1 + weights.T2 + weights.T3
+  let roll = Math.random() * totalW
+  let resultTier = 'T3'
+  if (roll < weights.T1) resultTier = 'T1'
+  else if (roll < weights.T1 + weights.T2) resultTier = 'T2'
+
+  // 决定属性：50%从素材中选，50%完全随机
+  const allAttrs = ['metal', 'wood', 'water', 'fire', 'earth']
+  let resultAttr
+  if (Math.random() < 0.5) {
+    resultAttr = Math.random() < 0.5 ? inst1.attr : inst2.attr
+  } else {
+    resultAttr = allAttrs[Math.floor(Math.random() * allAttrs.length)]
+  }
+
+  // 从该属性+品质的宠物池中随机选一只
+  const attrPets = PETS[resultAttr] || []
+  let pool = attrPets.filter(p => getPetTier(p.id) === resultTier)
+  const excl = new Set(excludeIds || [inst1.id, inst2.id])
+  let filtered = pool.filter(p => !excl.has(p.id))
+  if (filtered.length === 0) filtered = pool
+  if (filtered.length === 0) filtered = attrPets
+
+  const chosen = filtered[Math.floor(Math.random() * filtered.length)]
+  return { ...chosen, attr: resultAttr, star: 1 }
 }
 
 // 检查是否有同ID宠物已上场（用于禁止同ID上场）
@@ -591,9 +845,13 @@ function generateStarterPets(sessionPool) {
   })
 }
 
-// 获取宠物头像路径：★3满星使用水墨国风JPG，其余使用原版PNG
+// 获取宠物头像路径：★4终极形态使用s4资源，★3满星使用水墨国风JPG，其余使用原版PNG
 function getPetAvatarPath(pet) {
-  if ((pet.star || 1) >= MAX_STAR) {
+  const star = pet.star || 1
+  if (star >= 4) {
+    return `assets/pets/pet_${pet.id}_s4.jpg`
+  }
+  if (star >= 3) {
     return `assets/pets/pet_${pet.id}_s3.jpg`
   }
   return `assets/pets/pet_${pet.id}.png`
@@ -721,13 +979,20 @@ module.exports = {
   MAX_STAR,
   PET_TIER,
   STAR3_SKILL_OVERRIDE,
+  STAR4_SKILL_OVERRIDE,
+  CAPTAIN_SKILLS,
+  RECIPES,
   getPetTier,
   petHasSkill,
   getPetSkillDesc,
   getStar3Override,
+  getStar4Override,
+  getCaptainSkill,
+  findRecipe,
   getPetStarAtk,
   getPetStarSkillMul,
   tryMergePet,
+  fusePets,
   hasSameIdOnTeam,
   getPetsByAttr,
   getAllPets,

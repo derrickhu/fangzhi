@@ -75,8 +75,8 @@ function calcCaptureRate(ballType, enemy, teamAttr) {
   rate *= (1 + (1 - hpRatio) * 0.5)
 
   // 属性克制加成 +20%
-  const { COUNTER_MAP } = require('./tower')
-  if (teamAttr && COUNTER_MAP[teamAttr] === enemy.attr) {
+  const { getCounterMap } = require('./tower')
+  if (teamAttr && getCounterMap(enemy.attr)[teamAttr] === enemy.attr) {
     rate *= 1.2
   }
 
