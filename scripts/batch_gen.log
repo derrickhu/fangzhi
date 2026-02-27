@@ -1,0 +1,380 @@
+读取提示词文档...
+前缀: 4 个
+兽灵族: 52 只宠物
+
+[1/52] 火狐 (fire_fox) — R 火
+  normal_full: 已存在(1198KB)，跳过
+  normal_avatar: 已存在(1280KB)，跳过
+  awakened_full: 已存在(1334KB)，跳过
+  awakened_avatar: 已存在(1501KB)，跳过
+  normal_full_nobg: 已存在，跳过
+  awakened_full_nobg: 已存在，跳过
+[2/52] 水獭 (water_otter) — R 水
+  normal_full: 已存在(1260KB)，跳过
+  normal_avatar: 已存在(1224KB)，跳过
+  awakened_full: 已存在(1236KB)，跳过
+  awakened_avatar: 已存在(1405KB)，跳过
+  normal_full_nobg: 已存在，跳过
+  awakened_full_nobg: 已存在，跳过
+[3/52] 草兔 (grass_rabbit) — R 草
+  normal_full: 已存在(1182KB)，跳过
+  normal_avatar: 已存在(1184KB)，跳过
+  awakened_full: 已存在(1366KB)，跳过
+  awakened_avatar: 已存在(1353KB)，跳过
+  normal_full_nobg: 已存在，跳过
+  awakened_full_nobg: 已存在，跳过
+[4/52] 土熊 (earth_bear) — R 土
+  normal_full: 已存在(1224KB)，跳过
+  normal_avatar: 已存在(1278KB)，跳过
+  awakened_full: 生成中... OK (13.4s, 1422KB)
+  awakened_avatar: 生成中... OK (10.4s, 1491KB)
+  normal_full_nobg: 抠图中... 
+  加载 rembg birefnet-general... OK (2.8s)
+  OK (9.0s, 689KB)
+  awakened_full_nobg: 抠图中... OK (5.8s, 928KB)
+[5/52] 风猫 (wind_cat) — R 风
+  normal_full: 生成中... OK (12.0s, 1230KB)
+  normal_avatar: 生成中... OK (10.6s, 1177KB)
+  awakened_full: 生成中... OK (11.8s, 1216KB)
+  awakened_avatar: 生成中... OK (10.0s, 1266KB)
+  normal_full_nobg: 抠图中... OK (5.9s, 642KB)
+  awakened_full_nobg: 抠图中... OK (5.5s, 603KB)
+[6/52] 焰尾狐 (flame_tail_fox) — R 火
+  normal_full: 生成中... OK (10.2s, 1265KB)
+  normal_avatar: 生成中... OK (14.7s, 1330KB)
+  awakened_full: 生成中... OK (12.7s, 1310KB)
+  awakened_avatar: 生成中... OK (12.7s, 1631KB)
+  normal_full_nobg: 抠图中... OK (5.9s, 680KB)
+  awakened_full_nobg: 抠图中... OK (5.3s, 726KB)
+[7/52] 碧波獭 (azure_otter) — R 水
+  normal_full: 生成中... OK (12.6s, 1072KB)
+  normal_avatar: 生成中... OK (11.6s, 1175KB)
+  awakened_full: 生成中... OK (12.1s, 1255KB)
+  awakened_avatar: 生成中... OK (12.4s, 1436KB)
+  normal_full_nobg: 抠图中... OK (5.9s, 422KB)
+  awakened_full_nobg: 抠图中... OK (5.5s, 648KB)
+[8/52] 青叶兔 (green_leaf_rabbit) — R 草
+  normal_full: 生成中... OK (11.9s, 1145KB)
+  normal_avatar: 生成中... OK (10.7s, 1185KB)
+  awakened_full: 生成中... OK (11.0s, 1380KB)
+  awakened_avatar: 生成中... OK (12.0s, 1306KB)
+  normal_full_nobg: 抠图中... OK (5.7s, 515KB)
+  awakened_full_nobg: 抠图中... OK (5.2s, 860KB)
+[9/52] 岩甲熊 (rock_armor_bear) — R 土
+  normal_full: 生成中... OK (11.9s, 1315KB)
+  normal_avatar: 生成中... OK (12.1s, 1350KB)
+  awakened_full: 生成中... OK (12.1s, 1288KB)
+  awakened_avatar: 生成中... OK (11.1s, 1644KB)
+  normal_full_nobg: 抠图中... OK (5.9s, 870KB)
+  awakened_full_nobg: 抠图中... OK (5.3s, 737KB)
+[10/52] 飞影猫 (shadow_dash_cat) — R 风
+  normal_full: 生成中... OK (10.0s, 1111KB)
+  normal_avatar: 生成中... OK (11.2s, 1116KB)
+  awakened_full: 生成中... OK (10.9s, 1378KB)
+  awakened_avatar: 生成中... OK (11.4s, 1433KB)
+  normal_full_nobg: 抠图中... OK (5.7s, 441KB)
+  awakened_full_nobg: 抠图中... OK (5.2s, 897KB)
+[11/52] 赤炎狐 (crimson_fox) — SR 火
+  normal_full: 生成中... OK (14.9s, 1347KB)
+  normal_avatar: 生成中... OK (11.3s, 1414KB)
+  awakened_full: 生成中... OK (13.9s, 1365KB)
+  awakened_avatar: 生成中... OK (13.1s, 1582KB)
+  normal_full_nobg: 抠图中... OK (5.8s, 896KB)
+  awakened_full_nobg: 抠图中... OK (5.3s, 880KB)
+[12/52] 沧澜獭 (ocean_otter) — SR 水
+  normal_full: 生成中... OK (14.0s, 1214KB)
+  normal_avatar: 生成中... OK (12.6s, 1204KB)
+  awakened_full: 生成中... OK (15.4s, 1291KB)
+  awakened_avatar: 生成中... OK (11.3s, 1549KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 613KB)
+  awakened_full_nobg: 抠图中... OK (5.3s, 763KB)
+[13/52] 翠木兔 (jade_rabbit) — SR 草
+  normal_full: 生成中... OK (9.9s, 1261KB)
+  normal_avatar: 生成中... OK (10.6s, 1206KB)
+  awakened_full: 生成中... OK (12.4s, 1406KB)
+  awakened_avatar: 生成中... OK (11.3s, 1526KB)
+  normal_full_nobg: 抠图中... OK (5.8s, 707KB)
+  awakened_full_nobg: 抠图中... OK (5.3s, 795KB)
+[14/52] 磐石熊 (boulder_bear) — SR 土
+  normal_full: 生成中... OK (10.4s, 1349KB)
+  normal_avatar: 生成中... OK (13.2s, 1234KB)
+  awakened_full: 生成中... OK (14.6s, 1352KB)
+  awakened_avatar: 生成中... OK (13.7s, 1484KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 883KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 806KB)
+[15/52] 天风猫 (sky_wind_cat) — SR 风
+  normal_full: 生成中... OK (12.8s, 1261KB)
+  normal_avatar: 生成中... OK (14.5s, 1273KB)
+  awakened_full: 生成中... OK (13.5s, 1298KB)
+  awakened_avatar: 生成中... OK (11.3s, 1331KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 618KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 733KB)
+[16/52] 心月狐 (heart_moon_fox) — SSR 心
+  normal_full: 生成中... OK (11.8s, 1279KB)
+  normal_avatar: 生成中... OK (11.1s, 1300KB)
+  awakened_full: 生成中... OK (10.9s, 1310KB)
+  awakened_avatar: 生成中... OK (12.3s, 1317KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 729KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 816KB)
+[17/52] 雾狐 (mist_fox) — R 火+水
+  normal_full: 生成中... OK (12.7s, 1224KB)
+  normal_avatar: 生成中... OK (11.1s, 1331KB)
+  awakened_full: 生成中... OK (13.8s, 1372KB)
+  awakened_avatar: 生成中... OK (15.3s, 1552KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 622KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 896KB)
+[18/52] 焰兔 (flame_rabbit) — R 火+草
+  normal_full: 生成中... OK (10.6s, 1257KB)
+  normal_avatar: 生成中... OK (11.1s, 1231KB)
+  awakened_full: 生成中... OK (10.9s, 1376KB)
+  awakened_avatar: 生成中... OK (10.5s, 1496KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 668KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 824KB)
+[19/52] 焰甲熊 (flame_armor_bear) — R 火+土
+  normal_full: 生成中... OK (13.1s, 1284KB)
+  normal_avatar: 生成中... OK (12.3s, 1463KB)
+  awakened_full: 生成中... OK (11.7s, 1399KB)
+  awakened_avatar: 生成中... OK (11.8s, 1582KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 770KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 849KB)
+[20/52] 水芹獭 (water_celery_otter) — R 水+草
+  normal_full: 生成中... OK (11.0s, 1268KB)
+  normal_avatar: 生成中... OK (12.2s, 1375KB)
+  awakened_full: 生成中... OK (11.4s, 1389KB)
+  awakened_avatar: 生成中... OK (10.5s, 1454KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 743KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 824KB)
+[21/52] 泥甲熊 (mud_armor_bear) — R 水+土
+  normal_full: 生成中... OK (11.6s, 1304KB)
+  normal_avatar: 生成中... OK (11.8s, 1423KB)
+  awakened_full: 生成中... OK (10.2s, 1572KB)
+  awakened_avatar: 生成中... OK (10.3s, 1547KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 806KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 1142KB)
+[22/52] 风草猫 (wind_grass_cat) — R 风+草
+  normal_full: 生成中... OK (11.9s, 1135KB)
+  normal_avatar: 生成中... OK (11.8s, 1193KB)
+  awakened_full: 生成中... OK (14.4s, 1527KB)
+  awakened_avatar: 生成中... OK (13.1s, 1596KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 468KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 1067KB)
+[23/52] 烟狐 (smoke_fox) — SR 火+水
+  normal_full: 生成中... OK (12.4s, 1365KB)
+  normal_avatar: 生成中... OK (10.9s, 1448KB)
+  awakened_full: 生成中... OK (10.1s, 1499KB)
+  awakened_avatar: 生成中... OK (11.7s, 1632KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 838KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 1043KB)
+[24/52] 木岩熊 (wood_rock_bear) — SR 草+土
+  normal_full: 生成中... OK (11.2s, 1350KB)
+  normal_avatar: 生成中... OK (11.1s, 1312KB)
+  awakened_full: 生成中... OK (12.9s, 1511KB)
+  awakened_avatar: 生成中... OK (12.0s, 1460KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 854KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 1043KB)
+[25/52] 心焰狐 (heart_flame_fox) — SR 火+心
+  normal_full: 生成中... OK (14.1s, 1411KB)
+  normal_avatar: 生成中... OK (10.6s, 1347KB)
+  awakened_full: 生成中... OK (10.7s, 1450KB)
+  awakened_avatar: 生成中... OK (13.8s, 1519KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 899KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 1009KB)
+[26/52] 焰翼狐 (flame_wing_fox) — R 火+风
+  normal_full: 生成中... OK (11.0s, 1197KB)
+  normal_avatar: 生成中... OK (13.4s, 1198KB)
+  awakened_full: 生成中... OK (14.1s, 1432KB)
+  awakened_avatar: 生成中... OK (11.6s, 1565KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 544KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 870KB)
+[27/52] 水翼獭 (water_wing_otter) — R 水+风
+  normal_full: 生成中... OK (10.5s, 1218KB)
+  normal_avatar: 生成中... OK (14.8s, 1153KB)
+  awakened_full: 生成中... OK (12.9s, 1444KB)
+  awakened_avatar: 生成中... OK (11.7s, 1527KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 607KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 982KB)
+[28/52] 花翼兔 (flower_wing_rabbit) — R 草+风
+  normal_full: 生成中... OK (15.0s, 1184KB)
+  normal_avatar: 生成中... OK (13.8s, 1468KB)
+  awakened_full: 生成中... OK (15.0s, 1447KB)
+  awakened_avatar: 生成中... OK (11.6s, 1309KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 491KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 891KB)
+[29/52] 岩甲战熊 (rock_war_bear) — SR 土+水
+  normal_full: 生成中... OK (15.9s, 1272KB)
+  normal_avatar: 生成中... OK (16.2s, 1452KB)
+  awakened_full: 生成中... OK (13.3s, 1432KB)
+  awakened_avatar: 生成中... OK (11.7s, 1591KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 734KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 942KB)
+[30/52] 风翼猫 (wind_wing_cat) — R 风+风
+  normal_full: 生成中... OK (10.8s, 1143KB)
+  normal_avatar: 生成中... OK (12.5s, 1169KB)
+  awakened_full: 生成中... OK (13.2s, 1321KB)
+  awakened_avatar: 生成中... OK (15.4s, 1517KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 497KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 756KB)
+[31/52] 心光翼狐 (heart_light_wing_fox) — SSR 心+光
+  normal_full: 生成中... OK (11.7s, 1235KB)
+  normal_avatar: 生成中... OK (10.3s, 1205KB)
+  awakened_full: 生成中... OK (13.7s, 1426KB)
+  awakened_avatar: 生成中... OK (11.1s, 1560KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 666KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 703KB)
+[32/52] 火灯狐 (fire_lantern_fox) — R 火+水
+  normal_full: 生成中... OK (11.4s, 1307KB)
+  normal_avatar: 生成中... OK (11.6s, 1299KB)
+  awakened_full: 生成中... OK (12.7s, 1517KB)
+  awakened_avatar: 生成中... OK (11.0s, 1473KB)
+  normal_full_nobg: 抠图中... OK (5.7s, 787KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 1070KB)
+[33/52] 双水獭 (double_water_otter) — R 水+水
+  normal_full: 生成中... OK (14.7s, 1244KB)
+  normal_avatar: 生成中... OK (13.3s, 1215KB)
+  awakened_full: 生成中... OK (10.9s, 1345KB)
+  awakened_avatar: 生成中... OK (12.9s, 1463KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 697KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 750KB)
+[34/52] 草浪兔 (grass_wave_rabbit) — R 草+水
+  normal_full: 生成中... OK (12.8s, 1288KB)
+  normal_avatar: 生成中... OK (10.8s, 1219KB)
+  awakened_full: 生成中... OK (9.8s, 1416KB)
+  awakened_avatar: 生成中... OK (13.4s, 1425KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 705KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 877KB)
+[35/52] 心海狐 (heart_sea_fox) — SR 心+水
+  normal_full: 生成中... OK (10.3s, 1225KB)
+  normal_avatar: 生成中... OK (11.4s, 1215KB)
+  awakened_full: 生成中... OK (13.5s, 1485KB)
+  awakened_avatar: 生成中... OK (12.2s, 1551KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 708KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 1038KB)
+[36/52] 火莲狐 (fire_lotus_fox) — SR 火+草
+  normal_full: 生成中... OK (15.0s, 1353KB)
+  normal_avatar: 生成中... OK (10.7s, 1336KB)
+  awakened_full: 生成中... OK (10.6s, 1465KB)
+  awakened_avatar: 生成中... OK (12.5s, 1599KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 880KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 969KB)
+[37/52] 水青獭 (water_green_otter) — R 水+草
+  normal_full: 生成中... OK (11.5s, 1246KB)
+  normal_avatar: 生成中... OK (12.9s, 1213KB)
+  awakened_full: 生成中... OK (13.8s, 1333KB)
+  awakened_avatar: 生成中... OK (12.2s, 1482KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 609KB)
+  awakened_full_nobg: 抠图中... OK (5.1s, 747KB)
+[38/52] 花兔 (flower_rabbit) — R 草+草
+  normal_full: 生成中... OK (13.6s, 1189KB)
+  normal_avatar: 生成中... OK (13.0s, 1325KB)
+  awakened_full: 生成中... OK (12.5s, 1411KB)
+  awakened_avatar: 生成中... OK (11.0s, 1483KB)
+  normal_full_nobg: 抠图中... OK (5.6s, 624KB)
+  awakened_full_nobg: 抠图中... OK (33.7s, 885KB)
+[39/52] 岩花熊 (rock_flower_bear) — R 土+草
+  normal_full: 生成中... OK (11.9s, 1277KB)
+  normal_avatar: 生成中... OK (11.4s, 1418KB)
+  awakened_full: 生成中...     FAIL: rc=1 thon/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.RemoteProtocolError: Server disconnected without sending a response.
+FAILED (1061.7s)
+  awakened_avatar: 生成中... OK (11.3s, 1596KB)
+  normal_full_nobg: 抠图中... OK (8.0s, 764KB)
+[40/52] 心花狐 (heart_flower_fox) — SR 心+草
+  normal_full: 生成中... OK (13.1s, 1279KB)
+  normal_avatar: 生成中... OK (12.8s, 1418KB)
+  awakened_full: 生成中... OK (10.3s, 1465KB)
+  awakened_avatar: 生成中... OK (11.4s, 1490KB)
+  normal_full_nobg: 抠图中... OK (8.2s, 780KB)
+  awakened_full_nobg: 抠图中... OK (10.2s, 997KB)
+[41/52] 心灵狐 (soul_fox) — SSR 心+心
+  normal_full: 生成中... OK (10.7s, 1381KB)
+  normal_avatar: 生成中... OK (12.8s, 1337KB)
+  awakened_full: 生成中... OK (12.3s, 1352KB)
+  awakened_avatar: 生成中... OK (11.0s, 1454KB)
+  normal_full_nobg: 抠图中... OK (8.1s, 920KB)
+  awakened_full_nobg: 抠图中... OK (9.9s, 812KB)
+[42/52] 风驰猫 (swift_cat) — SR 风+风
+  normal_full: 生成中... OK (10.9s, 1219KB)
+  normal_avatar: 生成中... OK (13.1s, 1410KB)
+  awakened_full: 生成中... OK (12.3s, 1366KB)
+  awakened_avatar: 生成中... OK (11.5s, 1492KB)
+  normal_full_nobg: 抠图中... OK (8.2s, 599KB)
+  awakened_full_nobg: 抠图中... OK (10.3s, 833KB)
+[43/52] 磐石战熊 (fortress_bear) — SR 土+土
+  normal_full: 生成中... OK (12.8s, 1378KB)
+  normal_avatar: 生成中... OK (12.2s, 1522KB)
+  awakened_full: 生成中... OK (11.5s, 1461KB)
+  awakened_avatar: 生成中... OK (10.5s, 1466KB)
+  normal_full_nobg: 抠图中... OK (8.2s, 889KB)
+  awakened_full_nobg: 抠图中... OK (10.1s, 876KB)
+[44/52] 焚天狐 (inferno_fox) — SR 火+火
+  normal_full: 生成中... OK (10.1s, 1322KB)
+  normal_avatar: 生成中... OK (13.5s, 1552KB)
+  awakened_full: 生成中... OK (13.5s, 1608KB)
+  awakened_avatar: 生成中... OK (11.5s, 1491KB)
+  normal_full_nobg: 抠图中... OK (8.3s, 823KB)
+  awakened_full_nobg: 抠图中... OK (9.9s, 1160KB)
+[45/52] 沧澜水獭 (ocean_lord_otter) — SR 水+水
+  normal_full: 生成中... OK (13.6s, 1314KB)
+  normal_avatar: 生成中... OK (11.0s, 1232KB)
+  awakened_full: 生成中... OK (11.9s, 1527KB)
+  awakened_avatar: 生成中... OK (10.3s, 1448KB)
+  normal_full_nobg: 抠图中... OK (8.2s, 831KB)
+  awakened_full_nobg: 抠图中... OK (9.9s, 1061KB)
+[46/52] 灵木兔 (spirit_wood_rabbit) — SR 草+草
+  normal_full: 生成中... OK (10.0s, 1164KB)
+  normal_avatar: 生成中... OK (12.7s, 1260KB)
+  awakened_full: 生成中... OK (13.2s, 1368KB)
+  awakened_avatar: 生成中... OK (10.8s, 1698KB)
+  normal_full_nobg: 抠图中... OK (8.1s, 530KB)
+  awakened_full_nobg: 抠图中... OK (9.9s, 797KB)
+[47/52] 雷牙兽 (thunder_fang_beast) — SR 雷+土
+  normal_full: 生成中... OK (10.7s, 1334KB)
+  normal_avatar: 生成中... OK (13.2s, 1477KB)
+  awakened_full: 生成中... OK (11.4s, 1572KB)
+  awakened_avatar: 生成中... OK (12.2s, 1587KB)
+  normal_full_nobg: 抠图中... OK (8.0s, 829KB)
+  awakened_full_nobg: 抠图中... OK (9.8s, 1170KB)
+[48/52] 焚天狐皇 (inferno_fox_emperor) — SSR 火
+  normal_full: 生成中... OK (10.1s, 1501KB)
+  normal_avatar: 生成中... OK (11.4s, 1466KB)
+  awakened_full: 生成中... OK (11.0s, 1405KB)
+  awakened_avatar: 生成中... OK (11.3s, 1609KB)
+  normal_full_nobg: 抠图中... OK (8.4s, 1080KB)
+  awakened_full_nobg: 抠图中... OK (10.0s, 913KB)
+[49/52] 心界狐神 (heart_realm_fox_god) — SSR 心
+  normal_full: 生成中... OK (10.6s, 1346KB)
+  normal_avatar: 生成中... OK (9.9s, 1413KB)
+  awakened_full: 生成中... OK (11.5s, 1506KB)
+  awakened_avatar: 生成中... OK (12.3s, 1471KB)
+  normal_full_nobg: 抠图中... OK (8.4s, 783KB)
+  awakened_full_nobg: 抠图中... OK (9.9s, 1082KB)
+[50/52] 花木灵兔 (flower_wood_spirit_rabbit) — SR 草
+  normal_full: 生成中... OK (10.7s, 1277KB)
+  normal_avatar: 生成中... OK (10.0s, 1268KB)
+  awakened_full: 生成中... OK (10.7s, 1517KB)
+  awakened_avatar: 生成中... OK (10.3s, 1492KB)
+  normal_full_nobg: 抠图中... OK (8.3s, 646KB)
+  awakened_full_nobg: 抠图中... OK (10.3s, 984KB)
+[51/52] 岩晶战熊 (rock_crystal_war_bear) — SR 土
+  normal_full: 生成中... OK (9.8s, 1446KB)
+  normal_avatar: 生成中... OK (13.0s, 1362KB)
+  awakened_full: 生成中... OK (12.8s, 1492KB)
+  awakened_avatar: 生成中... OK (12.5s, 1655KB)
+  normal_full_nobg: 抠图中... OK (8.4s, 982KB)
+  awakened_full_nobg: 抠图中... OK (10.3s, 1027KB)
+[52/52] 心光狐翼 (heart_light_fox_wing) — SSR 心+光
+  normal_full: 生成中... OK (13.6s, 1291KB)
+  normal_avatar: 生成中... OK (10.4s, 1271KB)
+  awakened_full: 生成中... OK (10.9s, 1381KB)
+  awakened_avatar: 生成中... OK (10.7s, 1544KB)
+  normal_full_nobg: 抠图中... OK (8.4s, 774KB)
+  awakened_full_nobg: 抠图中... OK (10.2s, 912KB)
+
+==================================================
+完成！兽灵族 52 只宠物
+  图片生成: 193 张
+  图片跳过: 14 张（已存在）
+  图片失败: 1 张
+  抠图完成: 97 张
+  抠图跳过: 6 张（已存在）

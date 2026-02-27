@@ -107,8 +107,23 @@ function rBattle(g) {
       const imgX = (W - imgW) / 2
       imgDrawY = imgBottom - imgH
 
+      // idle 呼吸动画（无受击/死亡时生效）
+      const noHit = !(g._enemyHitFlash > 0) && !g._enemyDeathAnim
+      let idleBobY = 0, idleSX = 1, idleSY = 1
+      if (noHit) {
+        const idleT = (g.af || 0) * 0.035
+        idleBobY = Math.sin(idleT) * 3 * S
+        idleSX = 1 + Math.sin(idleT * 1.1) * 0.015
+        idleSY = 1 + Math.sin(idleT * 1.1 + 0.3) * 0.02
+      }
+
       // 敌人受击抖动+闪红+squash形变（使用离屏canvas避免source-atop透明底图问题）
       ctx.save()
+      if (noHit) {
+        ctx.translate(imgX + imgW/2, imgDrawY + imgH)
+        ctx.scale(idleSX, idleSY)
+        ctx.translate(-(imgX + imgW/2), -(imgDrawY + imgH))
+      }
       let hitOffX = 0, hitOffY = 0
       if (g._enemyHitFlash > 0) {
         const hitIntensity = g._enemyHitFlash / 12
@@ -138,7 +153,7 @@ function rBattle(g) {
         const blinkAlpha = flashP > 0.5 ? (Math.sin(g._enemyHitFlash * 1.5) * 0.3 + 0.7) : 1
         ctx.globalAlpha = (ctx.globalAlpha || 1) * blinkAlpha
       }
-      ctx.drawImage(enemyImg, imgX + hitOffX, imgDrawY + hitOffY, imgW, imgH)
+      ctx.drawImage(enemyImg, imgX + hitOffX, imgDrawY + hitOffY + idleBobY, imgW, imgH)
       // 受击时在图片上方叠一层同尺寸的敌人图片（lighter模式，产生泛白发光效果）
       if (g._enemyHitFlash > 0) {
         const glowAlpha = Math.min(0.5, g._enemyHitFlash / 12 * 0.5)
