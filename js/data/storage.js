@@ -50,13 +50,15 @@ function defaultPersist() {
       breakStone: 0,              // 突破石（★3→4升星所需）
     },
 
-    // === 关卡进度 ===
+    // === 关卡进度（7大区域对应7大种族） ===
     stageProgress: {
-      metal: { cleared: 0, stars: {} },   // stars: { 1: 3, 2: 2, ... }
-      wood:  { cleared: 0, stars: {} },
-      earth: { cleared: 0, stars: {} },
-      water: { cleared: 0, stars: {} },
-      fire:  { cleared: 0, stars: {} },
+      beast:   { cleared: 0, stars: {} },   // 兽灵族（16关）
+      wing:    { cleared: 0, stars: {} },   // 羽翼族（15关）
+      aqua:    { cleared: 0, stars: {} },   // 水族（15关）
+      flora:   { cleared: 0, stars: {} },   // 植灵族（15关）
+      element: { cleared: 0, stars: {} },   // 元素族（15关）
+      phantom: { cleared: 0, stars: {} },   // 幻灵族（13关）
+      dragon:  { cleared: 0, stars: {} },   // 龙族（14关）
     },
 
     // === 放置挂机 ===
@@ -236,14 +238,14 @@ class Storage {
 
   // ===== 宠物库操作 =====
   addPet(petData) {
-    // petData: { id, attr, star } — 从模板数据创建实例
+    // petData: { id, attr, star, level? } — 从模板数据创建实例
     const uid = generatePetUid()
     const instance = {
       uid,
       id: petData.id,
       attr: petData.attr,
       star: petData.star || 1,
-      level: 1,
+      level: petData.level || 1,
       exp: 0,
       locked: false,
     }
@@ -320,6 +322,8 @@ class Storage {
     const pet1 = this.getPetByUid(uid1)
     const pet2 = this.getPetByUid(uid2)
     if (!pet1 || !pet2 || uid1 === uid2) return null
+    // 宠物总数≤5时禁止合成（合成消耗2只产出1只，会导致宠物不足）
+    if (this._d.ownedPets.length <= 5) return null
     // 编队中的宠物不能作为素材
     if (this._d.teams.battle.includes(uid1) || this._d.teams.idle.includes(uid1)) return null
     if (this._d.teams.battle.includes(uid2) || this._d.teams.idle.includes(uid2)) return null
@@ -399,16 +403,18 @@ class Storage {
   }
 
   getStageClearedCount(area) {
-    return this._d.stageProgress[area]?.cleared || 0
+    const prog = this._d.stageProgress[area]
+    return (prog && prog.cleared) || 0
   }
 
   getStageStars(area, stageNum) {
-    return this._d.stageProgress[area]?.stars[stageNum] || 0
+    const prog = this._d.stageProgress[area]
+    return (prog && prog.stars && prog.stars[stageNum]) || 0
   }
 
   getTotalStars() {
     let total = 0
-    for (const area of ['metal','wood','earth','water','fire']) {
+    for (const area of ['beast','wing','aqua','flora','element','phantom','dragon']) {
       const prog = this._d.stageProgress[area]
       if (prog && prog.stars) {
         for (const s of Object.values(prog.stars)) total += s
@@ -701,8 +707,8 @@ class Storage {
     // 确保 daily 子字段
     if (!this._d.daily.shopPurchases) this._d.daily.shopPurchases = {}
     if (!this._d.daily.dungeonCount) this._d.daily.dungeonCount = {}
-    // 确保 stageProgress 所有区域存在
-    for (const area of ['metal','wood','earth','water','fire']) {
+    // 确保 stageProgress 所有区域存在（v3: 7大区域）
+    for (const area of ['beast','wing','aqua','flora','element','phantom','dragon']) {
       if (!this._d.stageProgress[area]) {
         this._d.stageProgress[area] = { cleared: 0, stars: {} }
       }
@@ -710,6 +716,16 @@ class Storage {
     // 确保 inventory 所有字段
     for (const k of Object.keys(def.inventory)) {
       if (this._d.inventory[k] === undefined) this._d.inventory[k] = def.inventory[k]
+    }
+    // v3迁移：检测旧版宠物ID（单字母+数字如m12/f1/e3）并清理
+    if (this._d.ownedPets && this._d.ownedPets.length > 0) {
+      const hasOldPets = this._d.ownedPets.some(p => /^[mwfeg]\d+$/.test(p.id))
+      if (hasOldPets) {
+        console.log('[Storage] 检测到旧版宠物ID，清理存档等待新手赠宠...')
+        this._d.ownedPets = []
+        this._d.teams = { battle: [], idle: [] }
+        this._save()
+      }
     }
   }
 

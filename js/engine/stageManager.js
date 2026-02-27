@@ -3,7 +3,7 @@
  * 管理关卡战斗流程：进入关卡 → 多波次战斗 → 结算奖励 → 捕捉
  * 与 battleEngine 配合，复用转珠战斗核心
  */
-const { generateStageData, AREAS, isAreaUnlocked } = require('../data/stages')
+const { generateStageData, AREAS, isAreaUnlocked, getBaseCaptureRate, DROP_RATE } = require('../data/stages')
 const { getPetById, getPetInstanceStats } = require('../data/pets')
 const { calcCaptureRate, CAPTURE_BALLS } = require('../data/items')
 const battleEngine = require('./battle')
@@ -11,8 +11,8 @@ const battleEngine = require('./battle')
 /**
  * 进入关卡战斗
  * @param {Main} g - 游戏主实例
- * @param {string} area - 区域ID (metal/wood/earth/water/fire)
- * @param {number} stageNum - 关卡编号 (1-20)
+ * @param {string} area - 区域ID (beast/wing/aqua/flora/element/phantom/dragon)
+ * @param {number} stageNum - 关卡编号 (1-N)
  */
 function enterStageBattle(g, area, stageNum) {
   // 检查区域解锁
@@ -237,12 +237,14 @@ function attemptCapture(g, ballType) {
   cp.animTimer = 60  // 动画帧数
 
   if (success) {
-    // 捕获成功：添加宠物到库
-    const template = getPetById(cp.petId)
-    if (template) {
-      const newPet = g.storage.addPet({ id: template.id, attr: template.attr, star: 1 })
-      cp.capturedPet = newPet
-    }
+    // 捕获成功：添加宠物到库（等级和星级与怪物一致）
+    const newPet = g.storage.addPet({
+      id: cp.petId,
+      attr: cp.enemy.attr,
+      star: cp.enemy.star || 1,
+      level: cp.enemy.level || 1,
+    })
+    cp.capturedPet = newPet
   }
 }
 
@@ -320,11 +322,11 @@ function _onAllWavesCleared(g) {
   g.storage.updateStageProgress(area, stageNum, stars)
   g.storage.recordBattle(g.combo)
 
-  // 宠物掉落判定
+  // 宠物掉落判定（击杀掉落为1星1级）
   rewards.petDrops = []
   if (data.repeatRewards && data.repeatRewards.petDropRate) {
     if (Math.random() < data.repeatRewards.petDropRate) {
-      // 从本关怪物中随机一只对应宠物
+      // 从本关怪物中随机一只对应宠物，掉落为1星1级
       const allEnemies = []
       for (const wave of g.stageBattleWaves) {
         for (const e of wave.enemies) {
@@ -333,11 +335,13 @@ function _onAllWavesCleared(g) {
       }
       if (allEnemies.length > 0) {
         const picked = allEnemies[Math.floor(Math.random() * allEnemies.length)]
-        const template = getPetById(picked.petId)
-        if (template) {
-          const newPet = g.storage.addPet({ id: template.id, attr: template.attr, star: 1 })
-          rewards.petDrops.push(newPet)
-        }
+        const newPet = g.storage.addPet({
+          id: picked.petId,
+          attr: picked.attr,
+          star: 1,
+          level: 1,
+        })
+        rewards.petDrops.push(newPet)
       }
     }
   }

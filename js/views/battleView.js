@@ -93,8 +93,8 @@ function rBattle(g) {
     R.drawHp(hpBarX, hpY, hpBarW, eHpH, g.enemy.hp, g.enemy.maxHp, ac ? ac.main : TH.danger, g._enemyHpLoss, true)
 
     // --- 怪物图片（胜利状态且死亡动画结束后不再绘制） ---
-    const avatarPath = g.enemy.avatar ? g.enemy.avatar + '.png' : null
-    const enemyImg = avatarPath ? R.getImg(`assets/${avatarPath}`) : null
+    const fullImgPath = g.enemy.fullImg ? g.enemy.fullImg + '.png' : null
+    const enemyImg = fullImgPath ? R.getImg(`assets/${fullImgPath}`) : null
     const imgBottom = hpY - 6*S  // 图片底部贴近血条上方
     let imgDrawY = eAreaTop  // 默认值
     const hideEnemy = g.bState === 'victory' && !g._enemyDeathAnim
@@ -1630,6 +1630,13 @@ function drawTeamBar(g, topY, barH, iconSize) {
     water: R.getImg('assets/ui/frame_pet_water.png'),
     fire:  R.getImg('assets/ui/frame_pet_fire.png'),
     earth: R.getImg('assets/ui/frame_pet_earth.png'),
+    // v3九元素映射到已有边框
+    grass:   R.getImg('assets/ui/frame_pet_wood.png'),
+    thunder: R.getImg('assets/ui/frame_pet_metal.png'),
+    wind:    R.getImg('assets/ui/frame_pet_water.png'),
+    light:   R.getImg('assets/ui/frame_pet_metal.png'),
+    shadow:  R.getImg('assets/ui/frame_pet_earth.png'),
+    heart:   R.getImg('assets/ui/frame_pet_fire.png'),
   }
   const totalSlots = 6
   const sidePad = 8*S

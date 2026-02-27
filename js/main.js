@@ -166,7 +166,7 @@ class Main {
     this.rankScrollY = 0
 
     // === 放置传新增状态 ===
-    this.selectedArea = 'metal'         // 当前选中区域
+    this.selectedArea = 'beast'         // 当前选中区域
     this.selectedStage = 1              // 当前选中关卡编号
     this.stageScrollY = 0               // 关卡列表滚动偏移
     this.homeTab = 'adventure'          // 主页底栏 'adventure'|'pets'|'bag'|'shop'
@@ -746,23 +746,13 @@ class Main {
 
   // ===== 新玩家初始赠宠 =====
   _giftStarterPets() {
-    const { getPetsByAttr, PET_TIER } = require('./data/pets')
-    // 赠送3只不同属性的T3幼兽，确保新手有队伍可用
-    const attrs = ['metal', 'wood', 'water', 'fire', 'earth']
-    // 随机打乱取前3
-    for (let i = attrs.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[attrs[i], attrs[j]] = [attrs[j], attrs[i]]
-    }
-    const chosen = attrs.slice(0, 3)
+    const { BASE_PETS } = require('./data/stages')
+    // 赠送3只兽灵族R级基础宠（第一区域前3只），确保新手有队伍可用
+    const starterPets = BASE_PETS.beast.filter(p => p.rarity === 'R').slice(0, 3)
     const uids = []
-    for (const attr of chosen) {
-      const pool = getPetsByAttr(attr).filter(p => PET_TIER.T3.includes(p.id))
-      if (pool.length > 0) {
-        const pet = pool[Math.floor(Math.random() * pool.length)]
-        const inst = this.storage.addPet({ id: pet.id, attr, star: 1 })
-        uids.push(inst.uid)
-      }
+    for (const pet of starterPets) {
+      const inst = this.storage.addPet({ id: pet.petId, attr: pet.attr, star: 1 })
+      uids.push(inst.uid)
     }
     // 自动编入战斗队伍
     if (uids.length > 0) {

@@ -59,8 +59,9 @@ const EXP_ITEMS = {
 // ===== 捕捉率计算 =====
 /**
  * 计算实际捕捉率
+ * 基于灵珠 + stages.js 中的稀有度/星级基础概率
  * @param {string} ballType - 灵珠类型 key
- * @param {object} enemy - 敌方数据 { hp, maxHp, attr, isBoss, isElite }
+ * @param {object} enemy - 敌方数据 { hp, maxHp, attr, rarity, star, isBoss, isElite }
  * @param {string} teamAttr - 队伍主属性（用于克制加成）
  * @returns {number} 0~1 的捕捉率
  */
@@ -68,9 +69,14 @@ function calcCaptureRate(ballType, enemy, teamAttr) {
   const ball = CAPTURE_BALLS[ballType]
   if (!ball) return 0
 
-  let rate = ball.baseRate
+  // 基础概率：来自 stages.js 的稀有度/星级配置
+  const { getBaseCaptureRate } = require('./stages')
+  let rate = getBaseCaptureRate(enemy.rarity || 'R', enemy.star || 1)
 
-  // 血量越低捕捉率越高：(1 - 剩余血量比×0.5)
+  // 灵珠倍率
+  rate *= (ball.baseRate / 0.20)  // 以普通灵珠0.20为基准倍率
+
+  // 血量越低捕捉率越高：(1 + (1 - 剩余血量比) × 0.5)
   const hpRatio = enemy.hp / enemy.maxHp
   rate *= (1 + (1 - hpRatio) * 0.5)
 
@@ -80,9 +86,7 @@ function calcCaptureRate(ballType, enemy, teamAttr) {
     rate *= 1.2
   }
 
-  // BOSS/精英惩罚
-  if (enemy.isBoss) rate *= 0.4
-  else if (enemy.isElite) rate *= 0.6
+  // BOSS/精英惩罚（已在基础概率中体现，此处不再额外惩罚）
 
   return Math.min(1, Math.max(0, rate))
 }

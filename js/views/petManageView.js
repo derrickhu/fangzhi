@@ -610,7 +610,8 @@ function _renderFuse(g) {
   curY = slotY + slotSize + 16*S
 
   // ── 融合按钮 ──
-  const canFuse = _fuseSlot1 && _fuseSlot2 && _fuseSlot1 !== _fuseSlot2
+  const tooFewPets = g.storage.ownedPets.length <= 5
+  const canFuse = _fuseSlot1 && _fuseSlot2 && _fuseSlot1 !== _fuseSlot2 && !tooFewPets
   const fuseBtnW = 140*S, fuseBtnH = 40*S
   g._fuseDoBtn = [(W-fuseBtnW)/2, curY, fuseBtnW, fuseBtnH]
   ctx.fillStyle = canFuse ? '#b388ff' : 'rgba(255,255,255,0.1)'
@@ -619,6 +620,13 @@ function _renderFuse(g) {
   ctx.font = `bold ${14*S}px "PingFang SC",sans-serif`
   ctx.textAlign = 'center'
   ctx.fillText('开始融合', W/2, curY + fuseBtnH*0.65)
+  if (tooFewPets) {
+    curY += fuseBtnH + 4*S
+    ctx.fillStyle = '#ff5040'; ctx.font = `${11*S}px "PingFang SC",sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText('宠物不足6只，无法进行融合', W/2, curY + 10*S)
+    curY += 12*S
+  }
 
   curY += fuseBtnH + 16*S
 
@@ -1032,6 +1040,7 @@ function tPetManage(g, type, x, y) {
     }
     // 开始融合按钮
     if (g._fuseDoBtn && _hit(x,y,g._fuseDoBtn)) {
+      if (g.storage.ownedPets.length <= 5) return
       if (_fuseSlot1 && _fuseSlot2 && _fuseSlot1 !== _fuseSlot2) {
         _fuseConfirm = true
       }

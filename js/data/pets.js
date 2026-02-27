@@ -727,11 +727,31 @@ function getAllPets() {
   return all
 }
 
-// 按id查找宠物
+// 按id查找宠物（兼容旧版PETS表和v3 BASE_PETS表）
 function getPetById(id) {
+  // 1. 先查旧版5属性宠物表
   for (const attr of ['metal','wood','water','fire','earth']) {
     const found = PETS[attr].find(p => p.id === id)
     if (found) return { ...found, attr, star: 1 }
+  }
+  // 2. 查v3 BASE_PETS（103只基础捕捉宠）
+  const { BASE_PETS, RARITY_BASE_ATK } = require('./stages')
+  for (const race of Object.keys(BASE_PETS)) {
+    const found = BASE_PETS[race].find(p => p.petId === id)
+    if (found) {
+      const baseAtk = (RARITY_BASE_ATK && RARITY_BASE_ATK[found.rarity]) || 8
+      return {
+        id: found.petId,
+        name: found.name,
+        attr: found.attr,
+        atk: baseAtk,
+        rarity: found.rarity,
+        race: found.race,
+        skill: null,  // v3宠物技能待迁移
+        cd: 0,
+        star: 1,
+      }
+    }
   }
   return null
 }
@@ -845,16 +865,22 @@ function generateStarterPets(sessionPool) {
   })
 }
 
-// 获取宠物头像路径：★4终极形态使用s4资源，★3满星使用水墨国风JPG，其余使用原版PNG
+// 获取宠物头像路径：★4觉醒满星用_s4，★1-3普通，全部JPG
 function getPetAvatarPath(pet) {
   const star = pet.star || 1
   if (star >= 4) {
     return `assets/pets/pet_${pet.id}_s4.jpg`
   }
-  if (star >= 3) {
-    return `assets/pets/pet_${pet.id}_s3.jpg`
+  return `assets/pets/pet_${pet.id}.jpg`
+}
+
+// 获取宠物全身图路径：★4觉醒满星用_full_s4，★1-3普通用_full，PNG透明底
+function getPetFullPath(pet) {
+  const star = pet.star || 1
+  if (star >= 4) {
+    return `assets/pets/pet_${pet.id}_full_s4.png`
   }
-  return `assets/pets/pet_${pet.id}.png`
+  return `assets/pets/pet_${pet.id}_full.png`
 }
 
 // ===== 灵兽图鉴故事 =====
@@ -1003,6 +1029,7 @@ module.exports = {
   generateSessionPetPool,
   generateStarterPets,
   getPetAvatarPath,
+  getPetFullPath,
   getPetLore,
   getMaxedPetIds,
   // 新增：宠物成长系统

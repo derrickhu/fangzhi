@@ -7,16 +7,19 @@ const { AREAS, AREA_ORDER, getAvailableAreas } = require('../data/stages')
 const { getPetById, getPetAvatarPath, getPetInstanceStats } = require('../data/pets')
 
 const AREA_COLORS = {
-  metal: { main: '#f5d76e', bg: '#3a3520' },
-  wood:  { main: '#6dd400', bg: '#1a3a10' },
-  earth: { main: '#d4a24e', bg: '#3a2a10' },
-  water: { main: '#4dabff', bg: '#102a3a' },
-  fire:  { main: '#ff5040', bg: '#3a1010' },
+  beast:   { main: '#d4a24e', bg: '#3a2a10' },
+  wing:    { main: '#4dabff', bg: '#102a3a' },
+  aqua:    { main: '#40a0ff', bg: '#0a2040' },
+  flora:   { main: '#6dd400', bg: '#1a3a10' },
+  element: { main: '#ff5040', bg: '#3a1010' },
+  phantom: { main: '#c070ff', bg: '#2a1040' },
+  dragon:  { main: '#f5d76e', bg: '#3a3520' },
 }
 
 const AREA_NAMES = {
-  metal: '金灵域', wood: '木灵域', earth: '土灵域',
-  water: '水灵域', fire: '火灵域',
+  beast: '灵兽荒原', wing: '苍穹群岛', aqua: '深海龙宫',
+  flora: '万灵古林', element: '元素熔炉', phantom: '幻梦深渊',
+  dragon: '龙脊山脉',
 }
 
 let _selectedArea = null

@@ -341,6 +341,12 @@ function rEvent(g) {
           water: R.getImg('assets/ui/frame_pet_water.png'),
           fire:  R.getImg('assets/ui/frame_pet_fire.png'),
           earth: R.getImg('assets/ui/frame_pet_earth.png'),
+          grass:   R.getImg('assets/ui/frame_pet_wood.png'),
+          thunder: R.getImg('assets/ui/frame_pet_metal.png'),
+          wind:    R.getImg('assets/ui/frame_pet_water.png'),
+          light:   R.getImg('assets/ui/frame_pet_metal.png'),
+          shadow:  R.getImg('assets/ui/frame_pet_earth.png'),
+          heart:   R.getImg('assets/ui/frame_pet_fire.png'),
         }
         g.pets.forEach((p, i) => {
           const px = petStartX + i * (petSlotSz + petGap2)
@@ -521,7 +527,7 @@ function rEvent(g) {
   const avatarY = cardTop + (cardH - avatarSize) / 2
   ctx.fillStyle = ac ? ac.bg : '#1a1a2e'
   R.rr(avatarX, avatarY, avatarSize, avatarSize, 6*S); ctx.fill()
-  const avatarPath = e.avatar ? e.avatar + '.png' : null
+  const avatarPath = e.avatar ? e.avatar + '.jpg' : null
   const enemyImg = avatarPath ? R.getImg(`assets/${avatarPath}`) : null
   if (enemyImg && enemyImg.width > 0) {
     ctx.save()
@@ -721,6 +727,12 @@ function rEvent(g) {
     water: R.getImg('assets/ui/frame_pet_water.png'),
     fire:  R.getImg('assets/ui/frame_pet_fire.png'),
     earth: R.getImg('assets/ui/frame_pet_earth.png'),
+    grass:   R.getImg('assets/ui/frame_pet_wood.png'),
+    thunder: R.getImg('assets/ui/frame_pet_metal.png'),
+    wind:    R.getImg('assets/ui/frame_pet_water.png'),
+    light:   R.getImg('assets/ui/frame_pet_metal.png'),
+    shadow:  R.getImg('assets/ui/frame_pet_earth.png'),
+    heart:   R.getImg('assets/ui/frame_pet_fire.png'),
   }
   const frameScale = 1.12
   const frameSize = teamIconSize * frameScale

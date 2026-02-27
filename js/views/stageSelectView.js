@@ -1,29 +1,32 @@
 /**
  * 关卡选择视图 + 关卡结算视图 — 灵宠放置传
- * 显示区域内20关列表、星级进度、关卡详情、开始战斗
+ * 显示区域内N关列表、星级进度、关卡详情、开始战斗
  */
 const V = require('./env')
-const { AREAS, generateStageData } = require('../data/stages')
+const { AREAS, BASE_PETS, generateStageData } = require('../data/stages')
 
 // ===== 区域配色 =====
 const AREA_COLORS = {
-  metal: { main: '#f5d76e', bg: '#3a3520', accent: '#ffe066' },
-  wood:  { main: '#6dd400', bg: '#1a3a10', accent: '#90ff40' },
-  earth: { main: '#d4a24e', bg: '#3a2a10', accent: '#e8c070' },
-  water: { main: '#4dabff', bg: '#102a3a', accent: '#80c8ff' },
-  fire:  { main: '#ff5040', bg: '#3a1010', accent: '#ff8070' },
+  beast:   { main: '#d4a24e', bg: '#3a2a10', accent: '#e8c070' },
+  wing:    { main: '#4dabff', bg: '#102a3a', accent: '#80c8ff' },
+  aqua:    { main: '#40a0ff', bg: '#0a2040', accent: '#70b8ff' },
+  flora:   { main: '#6dd400', bg: '#1a3a10', accent: '#90ff40' },
+  element: { main: '#ff5040', bg: '#3a1010', accent: '#ff8070' },
+  phantom: { main: '#c070ff', bg: '#2a1040', accent: '#d090ff' },
+  dragon:  { main: '#f5d76e', bg: '#3a3520', accent: '#ffe066' },
 }
 
 const AREA_NAMES = {
-  metal: '金灵域', wood: '木灵域', earth: '土灵域',
-  water: '水灵域', fire: '火灵域',
+  beast: '灵兽荒原', wing: '苍穹群岛', aqua: '深海龙宫',
+  flora: '万灵古林', element: '元素熔炉', phantom: '幻梦深渊',
+  dragon: '龙脊山脉',
 }
 
 // ===== 渲染关卡选择 =====
 function rStageSelect(g) {
   const { ctx, R, TH, W, H, S, safeTop } = V
   const area = g.selectedArea
-  const color = AREA_COLORS[area] || AREA_COLORS.metal
+  const color = AREA_COLORS[area] || AREA_COLORS.beast
   const areaData = AREAS[area]
   const cleared = g.storage.getStageClearedCount(area)
 
@@ -69,7 +72,9 @@ function rStageSelect(g) {
   ctx.font = `${11 * S}px "PingFang SC",sans-serif`
   ctx.textAlign = 'right'
   const totalStars = _getAreaTotalStars(g, area)
-  ctx.fillText(`⭐ ${totalStars}/60  ${cleared}/20`, W - 16 * S, topY + 30 * S)
+  const maxStages = areaData ? areaData.stageCount : 15
+  const maxStarsPossible = maxStages * 3
+  ctx.fillText(`⭐ ${totalStars}/${maxStarsPossible}  ${cleared}/${maxStages}`, W - 16 * S, topY + 30 * S)
 
   // ── 关卡列表 ──
   const listY = topY + topH + 8 * S
@@ -82,15 +87,20 @@ function rStageSelect(g) {
   ctx.rect(0, listY, W, listH)
   ctx.clip()
 
+  // 获取本区域的宠物列表，用于判断每关类型
+  const petList = BASE_PETS[areaData ? areaData.race : area] || []
+
   g._stageBtns = []
-  for (let i = 1; i <= 20; i++) {
+  for (let i = 1; i <= maxStages; i++) {
     const sy = listY + (i - 1) * (stageH + stageGap) - g.stageScrollY
     if (sy + stageH < listY || sy > listY + listH) continue  // 裁剪
 
     const isUnlocked = i <= cleared + 1
     const stars = g.storage.getStageStars(area, i)
-    const isBoss = (i === 10 || i === 20)
-    const isElite = (i === 5 || i === 15)
+    // 根据宠物稀有度判断BOSS/精英
+    const pet = petList[i - 1]
+    const isBoss = pet && pet.rarity === 'SSR'
+    const isElite = pet && pet.rarity === 'SR'
 
     const btnRect = [16 * S, sy, W - 32 * S, stageH]
     g._stageBtns.push({ rect: btnRect, stageNum: i, unlocked: isUnlocked })
@@ -110,13 +120,23 @@ function rStageSelect(g) {
     ctx.fillStyle = isUnlocked ? color.main : '#555'
     ctx.font = `bold ${20 * S}px "PingFang SC",sans-serif`
     ctx.textAlign = 'left'
-    ctx.fillText(`${i}`, btnRect[0] + 14 * S, sy + stageH * 0.55)
+    ctx.fillText(`${i}`, btnRect[0] + 14 * S, sy + stageH * 0.38)
+
+    // 宠物名称
+    if (pet) {
+      ctx.fillStyle = isUnlocked ? '#fff' : '#555'
+      ctx.font = `${12 * S}px "PingFang SC",sans-serif`
+      ctx.fillText(pet.name, btnRect[0] + 14 * S, sy + stageH * 0.72)
+    }
 
     // 类型标签
     let typeLabel = '普通'
     let typeLabelColor = 'rgba(255,255,255,0.5)'
     if (isBoss) { typeLabel = '👑 BOSS'; typeLabelColor = '#ff5040' }
     else if (isElite) { typeLabel = '⚡ 精英'; typeLabelColor = '#f5d76e' }
+    if (pet) {
+      typeLabel += ` [${pet.rarity}]`
+    }
 
     ctx.fillStyle = isUnlocked ? typeLabelColor : '#444'
     ctx.font = `${11 * S}px "PingFang SC",sans-serif`
@@ -167,7 +187,7 @@ function rStageResult(g) {
   if (!result) return
 
   const area = g.selectedArea
-  const color = AREA_COLORS[area] || AREA_COLORS.metal
+  const color = AREA_COLORS[area] || AREA_COLORS.beast
 
   // 背景
   ctx.fillStyle = result.defeat ? '#1a0808' : color.bg
@@ -295,7 +315,8 @@ function rStageResult(g) {
     ctx.fillText('重新挑战', centerX, curY + btnH * 0.62)
   } else {
     // 下一关按钮（如果有下一关）
-    if (g.selectedStage < 20) {
+    const maxStage = AREAS[g.selectedArea] ? AREAS[g.selectedArea].stageCount : 15
+    if (g.selectedStage < maxStage) {
       g._stageResultNextBtn = [centerX - btnW / 2, curY, btnW, btnH]
       ctx.fillStyle = color.main
       R.roundRect(...g._stageResultNextBtn, 10 * S)

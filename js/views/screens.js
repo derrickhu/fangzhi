@@ -928,6 +928,12 @@ function rReward(g) {
     water: R.getImg('assets/ui/frame_pet_water.png'),
     fire:  R.getImg('assets/ui/frame_pet_fire.png'),
     earth: R.getImg('assets/ui/frame_pet_earth.png'),
+    grass:   R.getImg('assets/ui/frame_pet_wood.png'),
+    thunder: R.getImg('assets/ui/frame_pet_metal.png'),
+    wind:    R.getImg('assets/ui/frame_pet_water.png'),
+    light:   R.getImg('assets/ui/frame_pet_metal.png'),
+    shadow:  R.getImg('assets/ui/frame_pet_earth.png'),
+    heart:   R.getImg('assets/ui/frame_pet_fire.png'),
   }
 
   g.rewards.forEach((rw, i) => {
